@@ -41,7 +41,7 @@ seed(수동)       데모 데이터 입력
 
 ## 1. 이미지 빌드 (GitHub)
 
-1. GitHub Actions → **Images** → Run workflow. 테스트용이면 `dev` 브랜치에서 실행한다(태그: `dev`, `sha-<커밋>`). main에 머지되면 `latest`가 자동으로 만들어진다.
+1. 이미지는 자동으로 빌드된다. dev에 push하면 `dev`, `sha-<커밋>` 태그가, main에 머지되면 `latest`가 만들어진다(backend/frontend/infra/docker 변경 시). images.yml이 main에 반영된 뒤에는 GitHub Actions → **Images** → Run workflow로 수동 실행도 된다.
 2. GHCR 패키지 3개(`init-api`, `init-worker`, `init-frontend`)는 처음에 **비공개**로 만들어진다. 둘 중 하나를 한다.
    - GitHub → 프로필 → Packages → 각 패키지 → Package settings → **Change visibility → Public** (서버에서 로그인 불필요)
    - 또는 서버에서 `read:packages` 권한 토큰으로 `docker login ghcr.io` 실행
