@@ -1,10 +1,9 @@
 name: Deploy AWS Main
 
+# 개인 fork(cjsan30/init_)에서는 팀 AWS 계정과 배포 secret이 없으므로 자동 배포를 끈다.
+# 원본 팀 레포(seok3m4/init)에서는 dev/main push 시 배포되던 workflow이다.
 on:
-  push:
-    branches:
-      - dev
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: aws-main-deploy
@@ -14,7 +13,7 @@ concurrency:
 jobs:
   detect:
     name: Detect Deploy Scope
-    if: github.event.created != true && github.event.deleted != true
+    if: github.repository == 'seok3m4/init' && github.event.created != true && github.event.deleted != true
     runs-on: ubuntu-latest
     permissions:
       contents: read

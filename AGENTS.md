@@ -116,7 +116,7 @@ Closes #12
 - Windows: `powershell -ExecutionPolicy Bypass -File scripts\check-local.ps1 -Role A`
 - macOS/Linux: `bash scripts/check-local.sh -Role A`
 - macOS/Linux hook 설치: `bash scripts/install-hooks.sh -Role A`
-- CI에서는 `.github/workflows/ci.yml`이 같은 검증을 실행한다.
+- 개인 fork(cjsan30/init_)의 CI(`.github/workflows/ci.yml`)는 패키지별 typecheck/lint/test/build만 실행한다. 역할별 하네스는 로컬에서 위 명령으로 실행한다.
 
 macOS/Linux에서는 실행 권한(`chmod +x`)에 의존하지 않도록 `bash scripts/*.sh` 형식을 표준 명령으로 사용한다.
 

@@ -1,12 +1,9 @@
 name: Project Automation
 
+# 개인 fork(cjsan30/init_)에는 팀 GitHub Project 보드와 알림 secret이 없으므로 자동 실행을 끈다.
+# 원본 팀 레포(seok3m4/init)에서는 issues/pull_request 이벤트로 실행되던 workflow이다.
 on:
-  issues:
-    types: [opened, assigned, closed]
-  pull_request:
-    types: [opened, closed]
-    branches:
-      - '**'
+  workflow_dispatch:
 
 env:
   PROJECT_OWNER: ${{ github.repository_owner }}
