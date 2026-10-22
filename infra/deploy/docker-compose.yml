@@ -1,0 +1,208 @@
+# init 단일 서버 배포 구성 (Oracle Always Free ARM / Hetzner x86 공용)
+#
+# 구성: Caddy(HTTPS) → frontend / api(+WebSocket), worker, PostgreSQL, Redis,
+#       SeaweedFS(S3 호환), ElasticMQ(SQS 호환)
+# AWS 관리형 서비스 없이 서버 한 대에서 동작하도록 S3/SQS를 호환 서버로 대체한다.
+#
+# 사용법은 infra/deploy/README.md 참고. 같은 폴더의 .env를 읽는다(.env.example 복사).
+
+name: init
+
+x-app-environment: &app-environment
+  NODE_ENV: production
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+  REDIS_URL: redis://redis:6379/0
+  AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+  AWS_ENDPOINT_URL: http://seaweedfs:8333
+  AWS_SQS_ENDPOINT_URL: http://elasticmq:9324
+  AI_SQS_QUEUE_URL: http://elasticmq:9324/000000000000/init-ai-jobs
+  SQS_QUEUE_URL: http://elasticmq:9324/000000000000/init-ai-jobs
+  S3_BUCKET: ${S3_BUCKET_NAME}
+  S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+  S3_PUBLIC_BASE_URL: https://${DOMAIN}/storage/${S3_BUCKET_NAME}
+  FRONTEND_ORIGIN: https://${DOMAIN}
+  APP_FRONTEND_URL: https://${DOMAIN}
+  GOOGLE_CALLBACK_URL: https://${DOMAIN}/api/v1/auth/google/callback
+  PUBLIC_APPLICATION_TOKEN_VERIFY_URL: http://api:3001/api/v1/public/applications/token/verify
+  AUTH_COOKIE_SECURE: "true"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - api
+
+  frontend:
+    image: ${IMAGE_REGISTRY}/init-frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+
+  api:
+    image: ${IMAGE_REGISTRY}/init-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *app-environment
+      PORT: "3001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      elasticmq:
+        condition: service_started
+      storage-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/v1/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  worker:
+    image: ${IMAGE_REGISTRY}/init-worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *app-environment
+      WORKER_REPOSITORY_MODE: prisma
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      elasticmq:
+        condition: service_started
+      storage-init:
+        condition: service_completed_successfully
+
+  # 배포 때마다 DB 마이그레이션을 먼저 적용한다(이미 적용된 것은 건너뜀).
+  migrate:
+    image: ${IMAGE_REGISTRY}/init-api:${IMAGE_TAG:-latest}
+    restart: "no"
+    env_file: .env
+    environment:
+      <<: *app-environment
+    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 시드 데이터(데모 공고/기업/평가 기준). 필요할 때만 수동 실행한다.
+  #   docker compose --profile tools run --rm seed
+  seed:
+    image: ${IMAGE_REGISTRY}/init-api:${IMAGE_TAG:-latest}
+    profiles: ["tools"]
+    restart: "no"
+    env_file: .env
+    environment:
+      <<: *app-environment
+    command: ["node", "dist/prisma/seed.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      storage-init:
+        condition: service_completed_successfully
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+  # SQS 호환 큐. 큐 이름/가시성 타임아웃/DLQ는 elasticmq.conf에서 AWS 설정과 맞춘다.
+  elasticmq:
+    image: softwaremill/elasticmq:1.7.1
+    restart: unless-stopped
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf:ro
+      - elasticmq-data:/data
+
+  # S3 호환 저장소. 외부 포트를 열지 않고, 공개 파일은 Caddy가 허용한 경로만 노출한다.
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.48
+    restart: unless-stopped
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        cat > /tmp/s3.json <<EOF
+        {
+          "identities": [
+            {
+              "name": "app",
+              "credentials": [{ "accessKey": "$${AWS_ACCESS_KEY_ID}", "secretKey": "$${AWS_SECRET_ACCESS_KEY}" }],
+              "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+            },
+            { "name": "anonymous", "actions": ["Read:$${S3_BUCKET_NAME}"] }
+          ]
+        }
+        EOF
+        exec weed server -dir=/data -ip=seaweedfs -ip.bind=0.0.0.0 -master.volumeSizeLimitMB=1024 -volume.max=0 -s3 -s3.port=8333 -s3.config=/tmp/s3.json
+    volumes:
+      - seaweedfs-data:/data
+
+  # 버킷이 없으면 만든다(재실행해도 안전).
+  storage-init:
+    image: amazon/aws-cli:2.38.5
+    restart: "no"
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_REGION:-ap-northeast-2}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for i in $$(seq 1 30); do
+          aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket "$${S3_BUCKET_NAME}" 2>/dev/null && exit 0
+          aws --endpoint-url http://seaweedfs:8333 s3 mb "s3://$${S3_BUCKET_NAME}" && exit 0
+          sleep 2
+        done
+        echo "storage-init: bucket을 만들지 못했습니다" >&2
+        exit 1
+    depends_on:
+      - seaweedfs
+
+volumes:
+  caddy-data:
+  caddy-config:
+  postgres-data:
+  redis-data:
+  elasticmq-data:
+  seaweedfs-data:

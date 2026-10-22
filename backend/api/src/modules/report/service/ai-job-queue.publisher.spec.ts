@@ -1,5 +1,5 @@
 import { SQSClient } from "@aws-sdk/client-sqs";
-import { SqsAiJobQueuePublisher, createAiJobQueuePublisher } from "./ai-job-queue.publisher";
+import { SqsAiJobQueuePublisher, createAiJobQueuePublisher, resolveSqsEndpoint } from "./ai-job-queue.publisher";
 
 describe("SqsAiJobQueuePublisher", () => {
   it("publishes AI worker jobs to SQS with process attributes", async () => {
@@ -41,5 +41,16 @@ describe("SqsAiJobQueuePublisher", () => {
     });
 
     expect(publisher).toBeInstanceOf(SqsAiJobQueuePublisher);
+  });
+
+  it("prefers AWS_SQS_ENDPOINT_URL over the shared AWS_ENDPOINT_URL", () => {
+    expect(
+      resolveSqsEndpoint({
+        AWS_ENDPOINT_URL: "http://seaweedfs:8333",
+        AWS_SQS_ENDPOINT_URL: "http://elasticmq:9324"
+      })
+    ).toBe("http://elasticmq:9324");
+    expect(resolveSqsEndpoint({ AWS_ENDPOINT_URL: "http://localhost:14566" })).toBe("http://localhost:14566");
+    expect(resolveSqsEndpoint({})).toBeUndefined();
   });
 });

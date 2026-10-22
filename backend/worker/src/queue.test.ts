@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { SQSClient } from "@aws-sdk/client-sqs";
-import { SqsAiJobQueue, createAiJobQueue } from "./queue";
+import { SqsAiJobQueue, createAiJobQueue, resolveSqsEndpoint } from "./queue";
 
 test("SqsAiJobQueue receives worker jobs from SQS messages", async () => {
   const client = {
@@ -132,4 +132,16 @@ test("createAiJobQueue selects SQS when AI_SQS_QUEUE_URL is configured", () => {
   });
 
   assert.equal(queue instanceof SqsAiJobQueue, true);
+});
+
+test("resolveSqsEndpoint prefers AWS_SQS_ENDPOINT_URL over the shared AWS_ENDPOINT_URL", () => {
+  assert.equal(
+    resolveSqsEndpoint({
+      AWS_ENDPOINT_URL: "http://seaweedfs:8333",
+      AWS_SQS_ENDPOINT_URL: "http://elasticmq:9324"
+    }),
+    "http://elasticmq:9324"
+  );
+  assert.equal(resolveSqsEndpoint({ AWS_ENDPOINT_URL: "http://localhost:14566" }), "http://localhost:14566");
+  assert.equal(resolveSqsEndpoint({}), undefined);
 });

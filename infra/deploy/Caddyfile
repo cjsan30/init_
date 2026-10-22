@@ -1,0 +1,40 @@
+# init 단일 서버 진입점. 도메인 인증서(Let's Encrypt)를 자동 발급/갱신한다.
+# 같은 도메인에서 /api/* 는 API(WebSocket 포함), 나머지는 frontend로 보낸다.
+# 프론트는 HTTPS 접속 시 브라우저 origin을 API 주소로 쓰므로 별도 API 도메인이 필요 없다.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# 경로 우회(../)로 비공개 객체에 접근하지 못하게 막는다.
+	@traversal path_regexp \.\.
+	respond @traversal 400
+
+	# 저장소는 공개용 파일만 노출한다: 회사 로고, JD 이미지, 시드 로고.
+	# 지원자 이력서/면접 영상 같은 나머지 객체는 API를 통해서만 내려간다.
+	@publicAssets path_regexp ^/storage/{$S3_BUCKET_NAME}/(company/[0-9]+/(profile-logo|jd-images)/[^/]+|seed/company-logos/[^/]+)$
+	handle @publicAssets {
+		@readOnly method GET HEAD
+		handle @readOnly {
+			uri strip_prefix /storage
+			reverse_proxy seaweedfs:8333
+		}
+		respond 405
+	}
+	handle /storage/* {
+		respond 404
+	}
+
+	handle /api/* {
+		reverse_proxy api:3001
+	}
+	handle /api-docs* {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

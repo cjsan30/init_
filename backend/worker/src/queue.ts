@@ -126,11 +126,16 @@ export function createAiJobQueue(env: NodeJS.ProcessEnv = process.env): AiJobQue
     return new SqsAiJobQueue(
       new SQSClient({
         region: env.AWS_REGION ?? "ap-northeast-2",
-        endpoint: env.AWS_ENDPOINT_URL,
+        endpoint: resolveSqsEndpoint(env),
       }),
       queueUrl
     );
   }
 
   return new InMemoryAiJobQueue([]);
+}
+
+// S3와 SQS를 서로 다른 호환 서버(예: SeaweedFS, ElasticMQ)로 운영할 때 SQS 주소만 따로 지정한다.
+export function resolveSqsEndpoint(env: NodeJS.ProcessEnv): string | undefined {
+  return env.AWS_SQS_ENDPOINT_URL?.trim() || env.AWS_ENDPOINT_URL || undefined;
 }
