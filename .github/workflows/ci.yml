@@ -3,10 +3,12 @@ name: CI
 # 개인 fork용 단순화 CI: 패키지별 install → typecheck → lint → test → build만 실행한다.
 # 원본 팀 레포의 역할별 하네스(docs/ownership/role/extended), Docker 빌드, SMTP smoke는 제외했다.
 
+# 구현은 dev에서 진행하고, 완성되면 dev → main PR로 올린다.
 on:
   push:
     branches:
       - main
+      - dev
   pull_request:
   workflow_dispatch:
 
