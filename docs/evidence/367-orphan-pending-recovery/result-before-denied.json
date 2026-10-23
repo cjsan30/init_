@@ -1,0 +1,216 @@
+{
+  "label": "before (5bf6eb68)",
+  "mode": "denied",
+  "scenario": {
+    "tickMeaning": "1 tick = 1 minute",
+    "totalMinutes": 30,
+    "permissionFixedAtMinute": 5,
+    "orphanThresholdMinutes": 15
+  },
+  "finalState": {
+    "source": "COMPLETED",
+    "followUp": "PENDING",
+    "followUpFailureReason": null
+  },
+  "followUpCompletedAtMinute": null,
+  "followUpHandledCount": 0,
+  "publishLog": [
+    {
+      "minute": 0,
+      "processLogId": 22,
+      "ok": false
+    }
+  ],
+  "handled": [
+    {
+      "minute": 0,
+      "processLogId": 21
+    },
+    {
+      "minute": 1,
+      "processLogId": 21
+    }
+  ],
+  "timeline": [
+    {
+      "minute": 0,
+      "source": "FAILED",
+      "followUp": "PENDING",
+      "queued": 1
+    },
+    {
+      "minute": 1,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 2,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 3,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 4,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 5,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 6,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 7,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 8,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 9,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 10,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 11,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 12,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 13,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 14,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 15,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 16,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 17,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 18,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 19,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 20,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 21,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 22,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 23,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 24,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 25,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 26,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 27,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 28,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 29,
+      "source": "COMPLETED",
+      "followUp": "PENDING",
+      "queued": 0
+    }
+  ]
+}

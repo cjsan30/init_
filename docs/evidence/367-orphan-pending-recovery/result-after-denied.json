@@ -1,0 +1,212 @@
+{
+  "label": "after (#367 이후 dev)",
+  "mode": "denied",
+  "scenario": {
+    "tickMeaning": "1 tick = 1 minute",
+    "totalMinutes": 30,
+    "permissionFixedAtMinute": 5,
+    "orphanThresholdMinutes": 15
+  },
+  "finalState": {
+    "source": "FAILED",
+    "followUp": "FAILED",
+    "followUpFailureReason": "AccessDenied: sqs:SendMessage"
+  },
+  "followUpCompletedAtMinute": null,
+  "followUpHandledCount": 0,
+  "publishLog": [
+    {
+      "minute": 0,
+      "processLogId": 22,
+      "ok": false
+    }
+  ],
+  "handled": [
+    {
+      "minute": 0,
+      "processLogId": 21
+    }
+  ],
+  "timeline": [
+    {
+      "minute": 0,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 1,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 2,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 3,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 4,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 5,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 6,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 7,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 8,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 9,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 10,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 11,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 12,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 13,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 14,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 15,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 16,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 17,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 18,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 19,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 20,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 21,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 22,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 23,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 24,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 25,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 26,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 27,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 28,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    },
+    {
+      "minute": 29,
+      "source": "FAILED",
+      "followUp": "FAILED",
+      "queued": 1
+    }
+  ]
+}

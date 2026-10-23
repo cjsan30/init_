@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="450" viewBox="0 0 960 450" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">
+<title>PR #367 전후: 후속 AI 작업 상태 타임라인</title>
+<rect width="960" height="450" fill="#fcfcfb"/>
+<text x="24" y="34" font-size="18" font-weight="700" fill="#0b0b0b">후속 AI 작업(개인화 질문 생성)의 상태 변화 — 같은 장애를 두 버전에 재현</text>
+<text x="24" y="56" font-size="12.5" fill="#52514e">worker 코드 그대로 실행, 장애만 주입 · 시간은 1초 = 실제 1분으로 축소 · 결과 파일: docs/evidence/367-orphan-pending-recovery</text>
+<rect x="24" y="74" width="12" height="12" rx="3" fill="#fab219"/>
+<text x="42" y="84" font-size="12" fill="#52514e">PENDING (실행 대기, 아무도 안 가져감)</text>
+<rect x="296" y="74" width="12" height="12" rx="3" fill="#d03b3b"/>
+<text x="314" y="84" font-size="12" fill="#52514e">FAILED (실패 기록 · 재시도 가능)</text>
+<rect x="537.2" y="74" width="12" height="12" rx="3" fill="#0ca30c"/>
+<text x="555.2" y="84" font-size="12" fill="#52514e">COMPLETED</text>
+<text x="636.4000000000001" y="84" font-size="12" fill="#52514e">✕ 발행 실패  ● 발행 성공</text>
+<text x="24" y="120" font-size="13.5" font-weight="700" fill="#0b0b0b">① 발행 오류 — worker의 SQS 발행 권한 누락 (실제 장애 #362)</text>
+<line x1="112" y1="150" x2="112" y2="228" stroke="#e4e3df" stroke-width="1"/>
+<text x="112" y="242" font-size="11" fill="#898781" text-anchor="middle">0분</text>
+<line x1="206.66666666666666" y1="150" x2="206.66666666666666" y2="228" stroke="#e4e3df" stroke-width="1"/>
+<text x="206.66666666666666" y="242" font-size="11" fill="#898781" text-anchor="middle">5분</text>
+<line x1="301.3333333333333" y1="150" x2="301.3333333333333" y2="228" stroke="#e4e3df" stroke-width="1"/>
+<text x="301.3333333333333" y="242" font-size="11" fill="#898781" text-anchor="middle">10분</text>
+<line x1="396" y1="150" x2="396" y2="228" stroke="#e4e3df" stroke-width="1"/>
+<text x="396" y="242" font-size="11" fill="#898781" text-anchor="middle">15분</text>
+<line x1="490.66666666666663" y1="150" x2="490.66666666666663" y2="228" stroke="#e4e3df" stroke-width="1"/>
+<text x="490.66666666666663" y="242" font-size="11" fill="#898781" text-anchor="middle">20분</text>
+<line x1="585.3333333333334" y1="150" x2="585.3333333333334" y2="228" stroke="#e4e3df" stroke-width="1"/>
+<text x="585.3333333333334" y="242" font-size="11" fill="#898781" text-anchor="middle">25분</text>
+<line x1="680" y1="150" x2="680" y2="228" stroke="#e4e3df" stroke-width="1"/>
+<text x="680" y="242" font-size="11" fill="#898781" text-anchor="middle">30분</text>
+<line x1="206.66666666666666" y1="146" x2="206.66666666666666" y2="230" stroke="#52514e" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="211.66666666666666" y="145" font-size="11" font-weight="600" fill="#52514e">권한 복구 (5분)</text>
+<text x="100" y="173" font-size="12.5" font-weight="600" fill="#0b0b0b" text-anchor="end">#367 이전</text>
+<rect x="112" y="154" width="568" height="30" rx="4" fill="#f0efec"/>
+<rect x="113" y="156" width="566" height="26" rx="4" fill="#fab219"/>
+<text x="135" y="173" font-size="11.5" font-weight="600" fill="#0b0b0b">PENDING · 실행 안 됨</text>
+<g stroke="#0b0b0b" stroke-width="2.5" stroke-linecap="round"><line x1="117" y1="164" x2="127" y2="174"/><line x1="127" y1="164" x2="117" y2="174"/></g>
+<rect x="696" y="164" width="10" height="10" rx="2" fill="#fab219"/>
+<text x="712" y="173" font-size="12" fill="#0b0b0b">30분 후에도 대기 · 원본은 '완료'로 표시</text>
+<text x="100" y="213" font-size="12.5" font-weight="600" fill="#0b0b0b" text-anchor="end">#367 이후</text>
+<rect x="112" y="194" width="568" height="30" rx="4" fill="#f0efec"/>
+<rect x="113" y="196" width="566" height="26" rx="4" fill="#d03b3b"/>
+<text x="135" y="213" font-size="11.5" font-weight="600" fill="#ffffff">FAILED</text>
+<g stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"><line x1="117" y1="204" x2="127" y2="214"/><line x1="127" y1="204" x2="117" y2="214"/></g>
+<rect x="696" y="204" width="10" height="10" rx="2" fill="#d03b3b"/>
+<text x="712" y="213" font-size="12" fill="#0b0b0b">실패로 기록 (sqs:SendMessage 거부)</text>
+<text x="24" y="274" font-size="13.5" font-weight="700" fill="#0b0b0b">② 조용한 유실 — DB 커밋 직후, 발행 전에 worker 종료</text>
+<line x1="112" y1="304" x2="112" y2="382" stroke="#e4e3df" stroke-width="1"/>
+<text x="112" y="396" font-size="11" fill="#898781" text-anchor="middle">0분</text>
+<line x1="206.66666666666666" y1="304" x2="206.66666666666666" y2="382" stroke="#e4e3df" stroke-width="1"/>
+<text x="206.66666666666666" y="396" font-size="11" fill="#898781" text-anchor="middle">5분</text>
+<line x1="301.3333333333333" y1="304" x2="301.3333333333333" y2="382" stroke="#e4e3df" stroke-width="1"/>
+<text x="301.3333333333333" y="396" font-size="11" fill="#898781" text-anchor="middle">10분</text>
+<line x1="396" y1="304" x2="396" y2="382" stroke="#e4e3df" stroke-width="1"/>
+<text x="396" y="396" font-size="11" fill="#898781" text-anchor="middle">15분</text>
+<line x1="490.66666666666663" y1="304" x2="490.66666666666663" y2="382" stroke="#e4e3df" stroke-width="1"/>
+<text x="490.66666666666663" y="396" font-size="11" fill="#898781" text-anchor="middle">20분</text>
+<line x1="585.3333333333334" y1="304" x2="585.3333333333334" y2="382" stroke="#e4e3df" stroke-width="1"/>
+<text x="585.3333333333334" y="396" font-size="11" fill="#898781" text-anchor="middle">25분</text>
+<line x1="680" y1="304" x2="680" y2="382" stroke="#e4e3df" stroke-width="1"/>
+<text x="680" y="396" font-size="11" fill="#898781" text-anchor="middle">30분</text>
+<line x1="396" y1="300" x2="396" y2="384" stroke="#52514e" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="401" y="299" font-size="11" font-weight="600" fill="#52514e">복구 기준 15분</text>
+<text x="100" y="327" font-size="12.5" font-weight="600" fill="#0b0b0b" text-anchor="end">#367 이전</text>
+<rect x="112" y="308" width="568" height="30" rx="4" fill="#f0efec"/>
+<rect x="113" y="310" width="566" height="26" rx="4" fill="#fab219"/>
+<text x="135" y="327" font-size="11.5" font-weight="600" fill="#0b0b0b">PENDING · 실행 안 됨</text>
+<g stroke="#0b0b0b" stroke-width="2.5" stroke-linecap="round"><line x1="117" y1="318" x2="127" y2="328"/><line x1="127" y1="318" x2="117" y2="328"/></g>
+<rect x="696" y="318" width="10" height="10" rx="2" fill="#fab219"/>
+<text x="712" y="327" font-size="12" fill="#0b0b0b">30분 후에도 대기</text>
+<text x="100" y="367" font-size="12.5" font-weight="600" fill="#0b0b0b" text-anchor="end">#367 이후</text>
+<rect x="112" y="348" width="568" height="30" rx="4" fill="#f0efec"/>
+<rect x="113" y="350" width="300.93333333333334" height="26" rx="4" fill="#fab219"/>
+<text x="135" y="367" font-size="11.5" font-weight="600" fill="#0b0b0b">PENDING · 실행 안 됨</text>
+<rect x="415.93333333333334" y="350" width="263.06666666666666" height="26" rx="4" fill="#0ca30c"/>
+<text x="437.93333333333334" y="367" font-size="11.5" font-weight="600" fill="#0b0b0b">COMPLETED</text>
+<g stroke="#0b0b0b" stroke-width="2.5" stroke-linecap="round"><line x1="117" y1="358" x2="127" y2="368"/><line x1="127" y1="358" x2="117" y2="368"/></g>
+<circle cx="424.93333333333334" cy="363" r="6" fill="#0b0b0b" stroke="#ffffff" stroke-width="2"/>
+<rect x="696" y="358" width="10" height="10" rx="2" fill="#0ca30c"/>
+<text x="712" y="367" font-size="12" fill="#0b0b0b">16분에 자동 재발행 → 완료</text>
+<text x="24" y="422" font-size="11.5" fill="#898781">원본 작업(문서 추출)은 ①-이전에서 재전달 후 '완료'로 끝나지만, 후속 작업은 다시 만들어지지 않아 영영 실행되지 않는다.</text>
+</svg>

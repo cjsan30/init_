@@ -1,0 +1,212 @@
+{
+  "label": "before (5bf6eb68)",
+  "mode": "crash",
+  "scenario": {
+    "tickMeaning": "1 tick = 1 minute",
+    "totalMinutes": 30,
+    "permissionFixedAtMinute": 5,
+    "orphanThresholdMinutes": 15
+  },
+  "finalState": {
+    "source": "RUNNING",
+    "followUp": "PENDING",
+    "followUpFailureReason": null
+  },
+  "followUpCompletedAtMinute": null,
+  "followUpHandledCount": 0,
+  "publishLog": [
+    {
+      "minute": 0,
+      "processLogId": 22,
+      "ok": false
+    }
+  ],
+  "handled": [
+    {
+      "minute": 0,
+      "processLogId": 21
+    }
+  ],
+  "timeline": [
+    {
+      "minute": 0,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 1
+    },
+    {
+      "minute": 1,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 2,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 3,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 4,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 5,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 6,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 7,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 8,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 9,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 10,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 11,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 12,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 13,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 14,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 15,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 16,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 17,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 18,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 19,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 20,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 21,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 22,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 23,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 24,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 25,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 26,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 27,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 28,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    },
+    {
+      "minute": 29,
+      "source": "RUNNING",
+      "followUp": "PENDING",
+      "queued": 0
+    }
+  ]
+}

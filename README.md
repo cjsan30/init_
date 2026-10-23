@@ -169,6 +169,17 @@ DB에는 `PENDING` 작업이 있지만 SQS publish가 유실될 수 있고, 반�
 
 at-least-once 중복을 멱등성으로 흡수하는 대신 가장 이른 복구 시점은 생성 15분 후이며, 실제 탐지는 다음 scan과 진행 중 batch 시간의 영향을 받아 상한을 보장하지 않습니다. 주기 조회 비용이 생기고, 복구할 수 없는 stale message는 의도적으로 폐기합니다.
 
+**재현 결과**
+
+같은 장애를 #367 이전·이후 worker 코드에 주입해 후속 작업의 상태를 비교했습니다. 이전에는 두 장애 모두 후속 작업이 오류 없이 `PENDING`에 머물렀고, 이후에는 발행 오류는 `FAILED`로 기록되고 worker 종료로 유실된 작업은 16분에 재발행되어 `COMPLETED`가 됐습니다.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/evidence/367-orphan-pending-recovery/timeline-dark.svg">
+  <img src="./docs/evidence/367-orphan-pending-recovery/timeline.svg" alt="PR #367 전후 후속 AI 작업 상태 타임라인. 이전 버전은 두 장애 모두 30분 동안 PENDING에 머물고, 이후 버전은 발행 오류는 FAILED로 기록하고 worker 종료는 16분에 재발행해 COMPLETED가 된다." width="860">
+</picture>
+
+> 시간은 1초 = 실제 1분으로 축소했고 DB·SQS 대신 worker의 InMemory 구현을 썼습니다. 방법과 원본 데이터는 [재현 기록](./docs/evidence/367-orphan-pending-recovery/README.md)에 있습니다.
+
 [PR #367 — 후속 publish 실패와 장기 PENDING 복구](https://github.com/seok3m4/init/pull/367) ·
 [PR #419 — Orphan SQS 메시지의 DLQ 반복 전송 방지](https://github.com/seok3m4/init/pull/419) ·
 [commit 58cf323f — RETRY·유실 job 복구](https://github.com/seok3m4/init/commit/58cf323fd792280b06927027d577e0e941c339d2)
