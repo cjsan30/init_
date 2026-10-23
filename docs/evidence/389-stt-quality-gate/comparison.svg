@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="512" viewBox="0 0 960 512" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">
+<title>PR #389 전후: 저품질 음성 인식 답변 처리 비교</title>
+<rect width="960" height="512" fill="#fcfcfb"/>
+<text x="24" y="34" font-size="18" font-weight="700" fill="#0b0b0b">음성 인식이 망가진 답변을 꼬리질문으로 이어 가는가 — 같은 답변 5개를 두 버전에 입력</text>
+<text x="24" y="56" font-size="12.5" fill="#52514e">worker의 꼬리질문 처리 코드를 그대로 실행 · AI 모델 호출은 횟수를 세는 대역으로 대체 · 결과 파일: docs/evidence/389-stt-quality-gate</text>
+<rect x="24" y="74" width="12" height="12" rx="3" fill="#0ca30c"/>
+<text x="42" y="84" font-size="12" fill="#52514e">올바른 처리</text>
+<rect x="130" y="74" width="12" height="12" rx="3" fill="#d03b3b"/>
+<text x="148" y="84" font-size="12" fill="#52514e">잘못된 처리 (망가진 답변으로 꼬리질문을 만듦)</text>
+<text x="24" y="120" font-size="12.5" font-weight="700" fill="#52514e">답변 (음성 인식 결과)</text>
+<text x="430" y="120" font-size="12.5" font-weight="700" fill="#52514e">#389 이전 (dac5398c)</text>
+<text x="690" y="120" font-size="12.5" font-weight="700" fill="#52514e">#389 이후</text>
+<line x1="24" y1="132" x2="936" y2="132" stroke="#e4e3df" stroke-width="1"/>
+<text x="28" y="156" font-size="13" font-weight="700" fill="#0b0b0b">무응답 녹음</text>
+<text x="28" y="175" font-size="11.5" fill="#52514e">"[NO_ANSWER]"</text>
+<rect x="430" y="142" width="236" height="26" rx="5" fill="#d03b3b"/>
+<text x="440" y="159" font-size="12.5" font-weight="700" fill="#ffffff">꼬리질문 생성</text>
+<text x="656" y="159" font-size="11.5" fill="#ffffff" text-anchor="end">AI 호출 2회</text>
+<rect x="690" y="142" width="236" height="26" rx="5" fill="#0ca30c"/>
+<text x="700" y="159" font-size="12.5" font-weight="700" fill="#0b0b0b">재답변 요청</text>
+<text x="916" y="159" font-size="11.5" fill="#0b0b0b" text-anchor="end">AI 호출 0회</text>
+<text x="690" y="182" font-size="10.5" fill="#898781">답변 녹음이 정상적으로 인식되지 않았습니…</text>
+<rect x="16" y="192" width="928" height="56" rx="4" fill="#f3f2ef"/>
+<text x="28" y="214" font-size="13" font-weight="700" fill="#0b0b0b">너무 짧은 인식</text>
+<text x="28" y="233" font-size="11.5" fill="#52514e">"음... 네 그"</text>
+<rect x="430" y="200" width="236" height="26" rx="5" fill="#d03b3b"/>
+<text x="440" y="217" font-size="12.5" font-weight="700" fill="#ffffff">꼬리질문 생성</text>
+<text x="656" y="217" font-size="11.5" fill="#ffffff" text-anchor="end">AI 호출 2회</text>
+<rect x="690" y="200" width="236" height="26" rx="5" fill="#0ca30c"/>
+<text x="700" y="217" font-size="12.5" font-weight="700" fill="#0b0b0b">재답변 요청</text>
+<text x="916" y="217" font-size="11.5" fill="#0b0b0b" text-anchor="end">AI 호출 0회</text>
+<text x="690" y="240" font-size="10.5" fill="#898781">음성 인식 결과가 너무 짧아 답변 내용을…</text>
+<text x="28" y="272" font-size="13" font-weight="700" fill="#0b0b0b">무음 구간 STT 환각</text>
+<text x="28" y="291" font-size="11.5" fill="#52514e">"시청해 주셔서 감사합니다. 구독과 좋아요 부탁드립니다."</text>
+<rect x="430" y="258" width="236" height="26" rx="5" fill="#d03b3b"/>
+<text x="440" y="275" font-size="12.5" font-weight="700" fill="#ffffff">꼬리질문 생성</text>
+<text x="656" y="275" font-size="11.5" fill="#ffffff" text-anchor="end">AI 호출 2회</text>
+<rect x="690" y="258" width="236" height="26" rx="5" fill="#0ca30c"/>
+<text x="700" y="275" font-size="12.5" font-weight="700" fill="#0b0b0b">재답변 요청</text>
+<text x="916" y="275" font-size="11.5" fill="#0b0b0b" text-anchor="end">AI 호출 1회</text>
+<text x="690" y="298" font-size="10.5" fill="#898781">음성 인식 결과의 문맥을 신뢰하기 어려워…</text>
+<rect x="16" y="308" width="928" height="56" rx="4" fill="#f3f2ef"/>
+<text x="28" y="330" font-size="13" font-weight="700" fill="#0b0b0b">끊기고 반복된 문장</text>
+<text x="28" y="349" font-size="11.5" fill="#52514e">"캐시 캐시 장애를 하고 하고 해결 말이 끊긴 문장입니다…"</text>
+<rect x="430" y="316" width="236" height="26" rx="5" fill="#d03b3b"/>
+<text x="440" y="333" font-size="12.5" font-weight="700" fill="#ffffff">꼬리질문 생성</text>
+<text x="656" y="333" font-size="11.5" fill="#ffffff" text-anchor="end">AI 호출 2회</text>
+<rect x="690" y="316" width="236" height="26" rx="5" fill="#0ca30c"/>
+<text x="700" y="333" font-size="12.5" font-weight="700" fill="#0b0b0b">재답변 요청</text>
+<text x="916" y="333" font-size="11.5" fill="#0b0b0b" text-anchor="end">AI 호출 1회</text>
+<text x="690" y="356" font-size="10.5" fill="#898781">음성 인식 결과의 문맥을 신뢰하기 어려워…</text>
+<text x="28" y="388" font-size="13" font-weight="700" fill="#0b0b0b">정상 답변</text>
+<text x="28" y="407" font-size="11.5" fill="#52514e">"트래픽이 몰리면 캐시 적중률이 떨어져 DB 부하가 커졌…"</text>
+<rect x="430" y="374" width="236" height="26" rx="5" fill="#0ca30c"/>
+<text x="440" y="391" font-size="12.5" font-weight="700" fill="#0b0b0b">꼬리질문 생성</text>
+<text x="656" y="391" font-size="11.5" fill="#0b0b0b" text-anchor="end">AI 호출 2회</text>
+<rect x="690" y="374" width="236" height="26" rx="5" fill="#0ca30c"/>
+<text x="700" y="391" font-size="12.5" font-weight="700" fill="#0b0b0b">꼬리질문 생성</text>
+<text x="916" y="391" font-size="11.5" fill="#0b0b0b" text-anchor="end">AI 호출 2회</text>
+<line x1="24" y1="430" x2="936" y2="430" stroke="#e4e3df" stroke-width="1"/>
+<text x="28" y="460" font-size="13" font-weight="700" fill="#0b0b0b">저품질 답변 4건 합계</text>
+<text x="430" y="460" font-size="13" font-weight="700" fill="#0b0b0b">꼬리질문 4개 · AI 호출 8회</text>
+<text x="690" y="460" font-size="13" font-weight="700" fill="#0b0b0b">꼬리질문 0개 · AI 호출 2회</text>
+<text x="24" y="490" font-size="11.5" fill="#898781">무응답·짧은 인식은 AI 호출 전에 걸러지고, 환각·끊긴 문장은 원래 하던 팩트체크 호출 1회 안에서 함께 판정한다(추가 호출 없음). 정상 답변 처리는 그대로다.</text>
+</svg>

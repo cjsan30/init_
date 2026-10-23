@@ -82,6 +82,12 @@ SQS 중복 전달과 worker 중단에 대비해 `processLogId`, DB lease, visibi
 
 [PR #406](https://github.com/seok3m4/init/pull/406) · [PR #412](https://github.com/seok3m4/init/pull/412)
 
+### 음성 인식이 망가진 답변의 평가 차단
+
+무응답·10자 미만 전사문은 AI 호출 전에 거르고, 문맥 없는 전사문은 기존 팩트체크 호출 안에서 함께 판정해 재답변을 요청합니다. 같은 답변 5개를 넣은 재현에서 저품질 4건으로 만든 꼬리질문이 4개에서 0개로 줄었고, 정상 답변 처리는 그대로였습니다.
+
+[재현 근거](./docs/evidence/389-stt-quality-gate/README.md) · [PR #389](https://github.com/seok3m4/init/pull/389)
+
 ### 실시간 답변 처리와 미디어 업로드 분리
 
 실시간 transcript가 확보된 답변은 상태 전이를 대용량 영상 업로드와 분리해 다음 질문 전환이 네트워크 속도에 묶이지 않게 했습니다.
