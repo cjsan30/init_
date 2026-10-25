@@ -77,9 +77,13 @@ services:
       retries: 5
       start_period: 40s
 
+  # worker 1개는 작업을 한 번에 1개씩 처리한다. 여러 개를 띄워도 DB lease로 같은 작업을
+  # 중복 처리하지 않으므로, 동시 면접의 꼬리질문/STT 지연을 줄이려고 기본 3개를 띄운다.
   worker:
     image: ${IMAGE_REGISTRY}/init-worker:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    deploy:
+      replicas: ${WORKER_REPLICAS:-3}
     env_file: .env
     environment:
       <<: *app-environment

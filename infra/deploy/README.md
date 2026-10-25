@@ -32,7 +32,10 @@ seed(수동)       데모 데이터 입력
 
 ## 서버 사양
 
-앱 3개(frontend/api/worker)와 DB, 큐, 저장소를 합쳐 메모리 3GB 안팎을 쓴다.
+앱 3종(frontend/api/worker)과 DB, 큐, 저장소를 합쳐 메모리 3~4GB를 쓴다.
+
+- worker는 기본 3개(`WORKER_REPLICAS=3`)를 띄운다. worker 1개는 AI 작업을 한 번에 1개씩 처리하므로, 동시 면접 제한(`MAX_CONCURRENT_INTERVIEWS=5`)과 함께 꼬리질문 지연을 줄이기 위함이다. 여러 개가 같은 작업을 중복 처리하지 않도록 DB lease로 보호된다.
+- 메모리가 4GB인 서버(Hetzner CX23)에서는 `WORKER_REPLICAS=1~2`로 낮춘다.
 
 | 서버 | 사양 | 월 비용 | 메모 |
 | --- | --- | --- | --- |
@@ -110,6 +113,7 @@ seed(수동)       데모 데이터 입력
 | --- | --- |
 | 새 이미지로 업데이트 | `git pull && docker compose pull && docker compose up -d` (마이그레이션 자동 적용) |
 | 로그 보기 | `docker compose logs -f api worker` |
+| worker 수 바꾸기 | `.env`의 `WORKER_REPLICAS` 수정 후 `docker compose up -d` |
 | DB 백업 | `bash scripts/backup-db.sh` (최근 7개 보관, cron 예시는 스크립트 상단) |
 | DB 복원 | `docker compose exec -T postgres pg_restore -U init -d init --clean < backups/<파일>.dump` |
 | 전체 중지 | `docker compose down` (볼륨/데이터는 유지) |
