@@ -104,6 +104,9 @@ export interface InterviewQuestionFilter {
 
 export interface InterviewRepository {
   listQuestions(filter?: InterviewQuestionFilter): MaybePromise<InterviewQuestion[]>;
+  // 동시 면접 제한용. 구현하지 않은 저장소는 제한 없이 동작한다.
+  countActiveInterviewSessions?(startedAfter: Date): MaybePromise<number>;
+  hasActiveInterviewSessionForApplication?(applicationId: number, startedAfter: Date): MaybePromise<boolean>;
   findQuestion(questionId: number): MaybePromise<InterviewQuestion | undefined>;
   listOwnedMockSessions(candidateId: number): MaybePromise<RuntimeInterviewSession[]>;
   findMockSession(sessionId: number): MaybePromise<RuntimeInterviewSession | undefined>;

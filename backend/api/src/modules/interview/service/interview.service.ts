@@ -62,6 +62,7 @@ import {
   isSaltluxFixedDemoPersonalizedQuestion,
   saltluxFixedDemoAnswerScriptForQuestion,
 } from "../../../shared/saltlux-fixed-demo";
+import { assertInterviewCapacity } from "./interview-capacity";
 import { RealtimeSessionCredentialService } from "./realtime-session-credential.service";
 import { assertRealtimeSessionRequest } from "./realtime-session-request";
 
@@ -120,11 +121,12 @@ export class InterviewService {
     return this.candidateService.saveDeviceCheck(sessionId, dto, currentUser);
   }
 
-  startInterview(
+  async startInterview(
     applicationId: number,
     currentUser: CurrentCandidateUser,
     mode: "STANDARD" | "DEMO_PRESET" = "STANDARD",
   ) {
+    await assertInterviewCapacity(this.interviewRepository, { applicationId });
     return this.candidateService.startInterview(applicationId, currentUser, mode);
   }
 
@@ -136,6 +138,8 @@ export class InterviewService {
     dto: StartMockInterviewDto,
     currentUser: CurrentCandidateUser,
   ): Promise<{ data: StartMockInterviewResult; meta: { traceId: string; timestamp: string } }> {
+    // 질문 생성 결과나 이용권을 쓰기 전에 막아야 실패해도 지원자에게 손해가 없다.
+    await assertInterviewCapacity(this.interviewRepository);
     const requestBody = this.toRequestBody(dto, "mockInterview");
     const showQuestionText = requestBody.showQuestionText === true;
     const questionTypes = this.resolveMockQuestionTypes(requestBody);

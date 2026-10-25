@@ -126,6 +126,23 @@ export class InMemoryInterviewRepository implements InterviewRepository {
   private readonly runtimeQuestionIds = new Set<number>();
   private readonly sttProcesses: Array<InterviewSttProcessRecord & { sessionId: number; answerId: number }> = [];
 
+  countActiveInterviewSessions(startedAfter: Date): number {
+    return this.activeSessions(startedAfter).length;
+  }
+
+  hasActiveInterviewSessionForApplication(applicationId: number, startedAfter: Date): boolean {
+    return this.activeSessions(startedAfter).some((session) => session.applicationId === applicationId);
+  }
+
+  private activeSessions(startedAfter: Date): RuntimeInterviewSession[] {
+    return [...this.mockSessions.values(), ...this.recruitingSessions.values()].filter((session) =>
+      session.status === "IN_PROGRESS" &&
+      !session.completedAt &&
+      session.startedAt !== undefined &&
+      Date.parse(session.startedAt) >= startedAfter.getTime()
+    );
+  }
+
   listQuestions(filter: InterviewQuestionFilter = {}): InterviewQuestion[] {
     return this.questions
       .filter((question) => question.isActive)

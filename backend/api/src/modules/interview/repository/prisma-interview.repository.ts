@@ -105,6 +105,18 @@ export class PrismaInterviewRepository implements InterviewRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  async countActiveInterviewSessions(startedAfter: Date): Promise<number> {
+    return this.prisma.interviewSession.count({ where: activeInterviewSessionWhere(startedAfter) });
+  }
+
+  async hasActiveInterviewSessionForApplication(applicationId: number, startedAfter: Date): Promise<boolean> {
+    const session = await this.prisma.interviewSession.findFirst({
+      where: { ...activeInterviewSessionWhere(startedAfter), applicationId: BigInt(applicationId) },
+      select: { sessionId: true },
+    });
+    return session !== null;
+  }
+
   async listQuestions(filter: InterviewQuestionFilter = {}): Promise<InterviewQuestion[]> {
     let questions = await this.queryQuestions(filter);
     if (questions.length > 0) {
@@ -1270,4 +1282,14 @@ function addDays(value: Date, days: number): Date {
   const next = new Date(value);
   next.setUTCDate(next.getUTCDate() + days);
   return next;
+}
+
+// 동시 면접 제한에서 세는 "진행 중" 면접: 시작했고, 끝나지도 지워지지도 않았고, 최근에 시작한 것.
+function activeInterviewSessionWhere(startedAfter: Date) {
+  return {
+    status: "IN_PROGRESS" as const,
+    completedAt: null,
+    deletedAt: null,
+    startedAt: { gte: startedAfter },
+  };
 }

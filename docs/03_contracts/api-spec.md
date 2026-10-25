@@ -1547,6 +1547,8 @@ AI 리포트 금지 기준:
   - 장치 점검 및 필수 동의 조건은 기존 채용면접 start 규칙을 따른다.
 - 성공 응답/처리:
   - 채용면접을 IN_PROGRESS로 전환하고 public runtime interviewUrl을 반환한다.
+- 오류/예외:
+  - API-065와 같은 시작 규칙을 따르므로 동시 진행 면접 수 제한에 걸리면 `INTERVIEW_CAPACITY_EXCEEDED`(503)를 반환한다.
 - 관련 ERD 테이블:
   - candidate_profiles, applications, consent_records, interview_sessions
 
@@ -2744,6 +2746,7 @@ Allocation Examples:
   - 생성된 질문 ID와 표시 순서는 `interview_session_questions`에 저장하며, API 서버 재시작 후에도 동일한 질문 흐름을 복원한다.
 - 오류/예외:
   - 질문 생성 실패 시 기본 질문 세트를 제공한다.
+  - `MAX_CONCURRENT_INTERVIEWS`가 설정돼 있고 최근 `INTERVIEW_ACTIVE_WINDOW_MINUTES` 안에 시작된 진행 중 면접(모의·채용 합산)이 그 수 이상이면 세션을 만들지 않고 `INTERVIEW_CAPACITY_EXCEEDED`(503)를 반환한다. 이용권은 차감하지 않는다.
 - 관련 ERD 테이블:
   - candidate_profiles, candidate_folders, file_assets, question_bank, applications, interview_sessions, interview_session_questions, evaluation_reports, report_scores, report_evidences, ai_process_logs
 - 비고/미결:
@@ -3563,6 +3566,7 @@ CandidateFolder 입력 제한:
   - framework별 scoring BASE coverage를 충족하지 못하면 `INTERVIEW_NCS_QUESTION_COVERAGE_INVALID`를 반환한다.
   - demo readiness 미완료/후보 부족은 각각 `INTERVIEW_DEMO_PRESET_NOT_READY`, `INTERVIEW_DEMO_PRESET_QUESTION_POOL_INSUFFICIENT`를 반환한다.
   - 진행·완료 또는 답변이 존재하는 세션의 기존 NCS snapshot 계약이 불완전하면 `INTERVIEW_NCS_SNAPSHOT_INVALID`를 반환한다.
+  - `READY` 세션을 새로 시작할 때 동시 진행 면접 수가 `MAX_CONCURRENT_INTERVIEWS` 이상이면 `INTERVIEW_CAPACITY_EXCEEDED`(503)를 반환한다. 같은 지원서의 진행 중 세션 재진입은 제한하지 않는다.
 - 관련 ERD 테이블:
   - candidate_profiles, postings, applications, consent_records, interview_sessions, ai_process_logs
 - 비고/미결:
