@@ -153,6 +153,18 @@ services:
     volumes:
       - ./elasticmq.conf:/opt/elasticmq.conf:ro
       - elasticmq-data:/data
+    depends_on:
+      elasticmq-volume-init:
+        condition: service_completed_successfully
+
+  # 새 볼륨은 root 소유로 만들어지는데 elasticmq는 uid 999로 실행되므로 소유자를 맞춘다.
+  # 맞추지 않으면 메시지 저장소를 열지 못해 큐가 하나도 생성되지 않는다.
+  elasticmq-volume-init:
+    image: busybox:1.36
+    restart: "no"
+    command: ["chown", "-R", "999:999", "/data"]
+    volumes:
+      - elasticmq-data:/data
 
   # S3 호환 저장소. 외부 포트를 열지 않고, 공개 파일은 Caddy가 허용한 경로만 노출한다.
   seaweedfs:
