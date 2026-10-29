@@ -26,8 +26,10 @@ if [[ ! "$hash" =~ ^\$2[aby]\$12\$.{53}$ ]]; then
   exit 1
 fi
 
+# psql은 -c 명령에서는 :'변수'를 치환하지 않으므로 SQL을 표준입력으로 넘긴다.
 docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
-  -v hash="$hash" \
-  -c "update users set password_hash = :'hash', updated_at = now() where auth_provider = 'LOCAL';"
+  -v hash="$hash" <<'SQL'
+update users set password_hash = :'hash', updated_at = now() where auth_provider = 'LOCAL';
+SQL
 
 echo "LOCAL 계정 비밀번호를 변경했습니다."
