@@ -192,6 +192,12 @@ export class CandidateService {
     });
   }
 
+  // 비로그인 공고 상세(API-059A). 개인별 지원 여부는 계산하지 않는다.
+  async getPublicJobDetail(jobId: number): Promise<ApiResponse<CandidateJobDetail>> {
+    const job = await this.getApplyAvailableJob(jobId);
+    return this.envelope({ ...job, canApply: true, alreadyApplied: false });
+  }
+
   async getApplyView(jobId: number, currentUser: CurrentCandidateUser): Promise<ApiResponse<CandidateApplyView>> {
     const jobDetail = await this.getJobDetail(jobId, currentUser);
     // 로그인 회원 기본정보(이름/이메일/연락처 + GitHub/블로그/포트폴리오) 자동 입력용.

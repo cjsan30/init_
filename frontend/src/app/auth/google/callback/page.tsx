@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { getDefaultEntryPath, refreshAuthSession } from "@/api/client";
+import { refreshAuthSession } from "@/api/client";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { toOAuthLoginErrorPath } from "@/features/auth/oauth-login-message";
+import { POST_LOGIN_NEXT_STORAGE_KEY, resolvePostLoginPath } from "@/features/auth/routePolicy";
 
 export default function GoogleOAuthCallbackPage() {
   const router = useRouter();
@@ -23,7 +24,9 @@ export default function GoogleOAuthCallbackPage() {
         const session = await refreshAuthSession();
         if (canceled) return;
         completeLogin(session);
-        router.replace(getDefaultEntryPath(session.user.userType));
+        const next = window.sessionStorage.getItem(POST_LOGIN_NEXT_STORAGE_KEY);
+        window.sessionStorage.removeItem(POST_LOGIN_NEXT_STORAGE_KEY);
+        router.replace(resolvePostLoginPath(next, session.user.userType));
       } catch {
         if (canceled) return;
         const errorMessage = "Google 로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.";

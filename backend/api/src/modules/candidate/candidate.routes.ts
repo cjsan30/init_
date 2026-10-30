@@ -23,4 +23,5 @@ export const candidateApiRoutes = {
 
 export const publicCandidateApiRoutes = {
   jobs: "jobs",
+  jobDetail: "jobs/:jobId",
 } as const;

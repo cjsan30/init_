@@ -16,6 +16,7 @@ import {
   setAccessToken,
 } from "../../api/client";
 import {
+  buildLoginRedirectPath,
   getRedirectForUnauthorizedRole,
   getRouteAccess,
   isAllowedUserType,
@@ -29,6 +30,7 @@ type AuthContextValue = {
   completeLogin: (session: AuthTokenResponse) => void;
   clearSession: () => void;
   logout: () => Promise<void>;
+  isExplicitLogout: () => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -37,6 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("checking");
   const [user, setUser] = useState<AuthUser | null>(null);
   const sessionClearVersionRef = useRef(0);
+  // 사용자가 직접 로그아웃한 경우 보호 화면 가드가 로그인 복귀 경로(next)를 붙이지 않게 한다.
+  const explicitLogoutRef = useRef(false);
+  const isExplicitLogout = useCallback(() => explicitLogoutRef.current, []);
 
   const clearSession = useCallback(() => {
     sessionClearVersionRef.current += 1;
@@ -47,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    explicitLogoutRef.current = true;
     try {
       await logoutAuthSession();
     } catch {
@@ -57,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   const completeLogin = useCallback((session: AuthTokenResponse) => {
+    explicitLogoutRef.current = false;
     setAccessToken(session.accessToken);
     setUser(session.user);
     setStatus("authenticated");
@@ -123,8 +130,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearSession();
       },
       logout,
+      isExplicitLogout,
     }),
-    [clearSession, completeLogin, logout, status, user],
+    [clearSession, completeLogin, isExplicitLogout, logout, status, user],
   );
 
   return (
@@ -143,26 +151,30 @@ export function useAuth() {
 function AuthRouteGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { status, user } = useAuth();
+  const { isExplicitLogout, status, user } = useAuth();
   const routeAccess = useMemo(() => getRouteAccess(pathname), [pathname]);
 
   useEffect(() => {
     if (status === "checking") return;
 
     if (routeAccess.kind === "protected" && status === "unauthenticated") {
-      router.replace(routeAccess.loginPath);
+      router.replace(
+        isExplicitLogout()
+          ? routeAccess.loginPath
+          : buildLoginRedirectPath(routeAccess.loginPath, `${pathname}${window.location.search}`),
+      );
       return;
     }
 
     if (
-      routeAccess.kind === "protected" &&
+      (routeAccess.kind === "protected" || routeAccess.kind === "optional") &&
       status === "authenticated" &&
       user &&
       !isAllowedUserType(user.userType, routeAccess.allowedUserTypes)
     ) {
       router.replace(getRedirectForUnauthorizedRole(user.userType));
     }
-  }, [pathname, routeAccess, router, status, user]);
+  }, [isExplicitLogout, pathname, routeAccess, router, status, user]);
 
   if (routeAccess.kind !== "common" && status === "checking") {
     return null;
@@ -170,6 +182,10 @@ function AuthRouteGuard({ children }: { children: ReactNode }) {
 
   if (routeAccess.kind === "protected") {
     if (status !== "authenticated" || !user) return null;
+    if (!isAllowedUserType(user.userType, routeAccess.allowedUserTypes)) return null;
+  }
+
+  if (routeAccess.kind === "optional" && status === "authenticated" && user) {
     if (!isAllowedUserType(user.userType, routeAccess.allowedUserTypes)) return null;
   }
 

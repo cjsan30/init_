@@ -9,7 +9,8 @@ export const candidateNavLabels = {
   performance: "지표",
 } as const;
 
-// 마이페이지 하위 탭(드롭다운·마이페이지 탭 바 공용). 순서: 프로필 → 지원 내역 → 지원서 세트 → 결제 → 지표. (#272)
+// 마이페이지 하위 탭(드롭다운·마이페이지 탭 바 공용). 순서: 프로필 → 지원 내역 → 지원서 세트 → 결제. (#272)
+// 지표(/ai/performance)는 내부 모니터링 화면이라 메뉴에서 숨기고 직접 URL로만 연다. (#436)
 export const candidateAccountBillingNav = [
   {
     label: "프로필",
@@ -26,10 +27,6 @@ export const candidateAccountBillingNav = [
   {
     label: "결제",
     href: CANDIDATE_BILLING_ROUTE,
-  },
-  {
-    label: "지표",
-    href: AI_PERFORMANCE_ROUTE,
   },
 ] as const;
 

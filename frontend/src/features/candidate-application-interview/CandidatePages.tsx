@@ -22,6 +22,7 @@ import { sendClientPerformanceLog } from "../ai-performance/api";
 import { resolveClientNextStepType } from "../ai-performance/client-next-step";
 import { GnbAvatar, GnbLogoutButton } from "../auth/GnbAccountControls";
 import { useAuth } from "../auth/AuthProvider";
+import { buildLoginRedirectPath } from "../auth/routePolicy";
 import { createPaymentOrder, getCandidateMockInterviewPassSummary, grantCandidateMockInterviewDevPasses, listPaymentOrders } from "../payment/api";
 import { PaymentOrderPagination, formatDateTime as formatPaymentDateTime, formatWon } from "../payment/CompanyBillingPage";
 import { requestTossCardPayment } from "../payment/toss-sdk";
@@ -770,8 +771,11 @@ export function CandidateJobsPage({ publicEntry = false }: { publicEntry?: boole
 export function CandidateJobDetailPage({ jobId }: { jobId: number }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const load = useCallback(() => getCandidateApi().getJobDetail(jobId), [jobId]);
-  const { data, loading, error, refresh } = useCandidateResource(load, [jobId]);
+  // 비로그인 방문자는 공개 상세(API-059A)를 보고, 지원하기는 로그인 후 이 공고로 돌아온다.
+  const { status: authStatus } = useAuth();
+  const isGuest = authStatus !== "authenticated";
+  const load = useCallback(() => (isGuest ? getPublicCandidateApi() : getCandidateApi()).getJobDetail(jobId), [isGuest, jobId]);
+  const { data, loading, error, refresh } = useCandidateResource(load, [isGuest, jobId]);
 
   // 지원서 제출 모달(이슈 #207): 공고 상세 위에서 단계별로 작성하고, 성공 시 상세를 갱신한다.
   const [applyOpen, setApplyOpen] = useState(false);
@@ -786,8 +790,16 @@ export function CandidateJobDetailPage({ jobId }: { jobId: number }) {
   const [applyPrefilled, setApplyPrefilled] = useState(false);
   const [restoredEditedSet, setRestoredEditedSet] = useState(false);
   useEffect(() => {
-    if (searchParams.get("apply") === "1") setApplyOpen(true);
-  }, [searchParams]);
+    if (searchParams.get("apply") === "1" && !isGuest) setApplyOpen(true);
+  }, [isGuest, searchParams]);
+
+  function handleApplyClick() {
+    if (isGuest) {
+      router.push(buildLoginRedirectPath("/login", `/candidate/jobs/${jobId}?apply=1`));
+      return;
+    }
+    setApplyOpen(true);
+  }
   useEffect(() => {
     if (!applyOpen || applyPrefilled) {
       return;
@@ -877,7 +889,7 @@ export function CandidateJobDetailPage({ jobId }: { jobId: number }) {
       return;
     }
     let active = true;
-    getCandidateApi()
+    (isGuest ? getPublicCandidateApi() : getCandidateApi())
       .listJobs({ jobRoles: [relatedRoleCode], limit: 8, sort: "createdAt", order: "desc" })
       .then((res) => {
         if (active) setRelatedJobs(res.data.items.filter((item) => item.jobId !== currentJobId).slice(0, 5));
@@ -888,7 +900,7 @@ export function CandidateJobDetailPage({ jobId }: { jobId: number }) {
     return () => {
       active = false;
     };
-  }, [relatedRoleCode, currentJobId]);
+  }, [currentJobId, isGuest, relatedRoleCode]);
 
   async function handleResumeFileSelect(file: File) {
     setApplyBusy(true);
@@ -935,9 +947,9 @@ export function CandidateJobDetailPage({ jobId }: { jobId: number }) {
   }
 
   return (
-    <CandidatePageShell active="jobs">
+    <CandidatePageShell active="jobs" publicEntry={isGuest}>
       <StatusNotice loading={loading} error={error} message={message} />
-      {data ? <CandidateJobDetailView job={data.data} relatedJobs={relatedJobs} onApplyClick={() => setApplyOpen(true)} /> : null}
+      {data ? <CandidateJobDetailView job={data.data} relatedJobs={relatedJobs} onApplyClick={handleApplyClick} /> : null}
       {applyOpen && data ? (
         <CandidateApplyModal
           job={data.data}
@@ -3248,9 +3260,9 @@ export function CandidateBillingPage() {
     try {
       const summary = await grantCandidateMockInterviewDevPasses({ passAmount: 5 });
       setPassSummary(summary);
-      notifyAlert(`테스트용 모의면접 이용권 5회를 추가했습니다. 현재 사용 가능 ${summary.availablePasses}회`);
+      notifyAlert(`체험용 모의면접 이용권 5회를 받았습니다. 현재 사용 가능 ${summary.availablePasses}회`);
     } catch (error) {
-      notifyAlert(error instanceof Error ? error.message : "테스트 이용권을 추가하지 못했습니다.");
+      notifyAlert(error instanceof Error ? error.message : "체험용 이용권을 받지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -3293,7 +3305,7 @@ export function CandidateBillingPage() {
                   onClick={() => void handleDevelopmentPassGrant()}
                   disabled={loading || paying}
                 >
-                  테스트 이용권 5회 추가
+                  체험용 이용권 5회 받기
                 </button>
               ) : null}
             </div>
@@ -12173,6 +12185,7 @@ function getPublicCandidateApi() {
     baseUrl: getApiBaseUrl(),
     fetcher: fetch,
     jobsPath: publicCandidateApiPaths.jobs,
+    jobDetailPath: publicCandidateApiPaths.jobDetail,
   });
 }
 

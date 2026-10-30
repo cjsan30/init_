@@ -157,7 +157,7 @@ export class AuthService {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const callbackUrl = process.env.GOOGLE_CALLBACK_URL;
     if (!clientId || !callbackUrl) {
-      throw new ApiException(ERROR_CODES.COMMON_VALIDATION_FAILED, "Google OAuth 환경변수가 설정되지 않았습니다.", HttpStatus.BAD_REQUEST);
+      throw new ApiException(ERROR_CODES.COMMON_VALIDATION_FAILED, "현재 Google 로그인을 사용할 수 없습니다. 이메일로 로그인해 주세요.", HttpStatus.BAD_REQUEST);
     }
     const params = new URLSearchParams({
       client_id: clientId,

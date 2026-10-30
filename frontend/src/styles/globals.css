@@ -1142,6 +1142,14 @@ a.gnb-link:focus-visible {
   transform: translateY(0);
 }
 
+/* 모바일에서 마지막 메뉴 드롭다운이 화면 오른쪽 밖으로 나가 가로 스크롤을 만들지 않게 한다. */
+@media (max-width: 900px) {
+  .gnb-item:last-child > .gnb-panel {
+    left: auto;
+    right: 0;
+  }
+}
+
 .gnb-panel::before {
   position: absolute;
   right: 0;
@@ -9047,7 +9055,8 @@ p {
 /* ============================================================
    지원자 채용공고 — 검색 히어로 + 태그 카드 (노션 플랫)
    ============================================================ */
-.notion .candidate-jobs-panel { display: grid; gap: 44px; background: transparent; border: 0; padding: 0; }
+/* minmax(0,1fr): 직무 바로가기 캐러셀의 min-content 폭이 모바일 페이지 폭을 늘리지 않게 한다. */
+.notion .candidate-jobs-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; background: transparent; border: 0; padding: 0; }
 
 /* --- 히어로/목록 스크롤 스냅: 이 페이지 마운트 동안에만 적용 --- */
 /* 스크롤 이동은 JS rAF 트윈으로 처리(이 앱에서 CSS smooth 가 취소되는 문제 회피). */
@@ -9477,7 +9486,7 @@ p {
 @media (max-width: 540px) { .notion .candidate-jobs-carousel > .candidate-job-card { flex-basis: 100%; } }
 
 /* 전체 공고 목록: 라인으로 구분 + 필터/정렬 + 그리드 */
-.notion .candidate-jobs-all { display: grid; gap: 20px; margin-top: 28px; padding-top: 28px; border-top: 1px solid rgba(55, 53, 47, 0.1); min-height: calc(100dvh - 96px); align-content: start; scroll-margin-top: 72px; }
+.notion .candidate-jobs-all { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 28px; padding-top: 28px; border-top: 1px solid rgba(55, 53, 47, 0.1); min-height: calc(100dvh - 96px); align-content: start; scroll-margin-top: 72px; }
 .notion .candidate-jobs-empty { display: grid; gap: 6px; place-items: center; padding: 72px 20px; text-align: center; }
 .notion .candidate-jobs-empty strong { font-size: 18px; font-weight: 700; color: #191919; }
 .notion .candidate-jobs-empty span { font-size: 14px; color: rgba(55, 53, 47, 0.55); }

@@ -3355,6 +3355,24 @@ CandidateFolder 입력 제한:
 - 비고/미결:
   - 지원하기 클릭 시 별도 이력서 제출 페이지로 이동
 
+### API-059A GET /public/jobs/{jobId}
+- 도메인: 지원자 - 공개 채용공고
+- 권한/인증: 공개 / 로그인 불필요
+- 관련 화면: 회사 상세 화면 (/candidate/jobs/{jobId}, 비로그인 진입)
+- UI Type: page
+- 상태 코드: 200 OK
+- 비동기: N
+- Path Params: jobId
+- 검증/전제조건:
+  - API-058A와 같이 공개 상태이며 지원 가능한 채용공고만 조회한다.
+  - 개인별 지원 여부는 계산하지 않는다.
+- 성공 응답/처리:
+  - API-059와 동일한 채용공고 상세 응답을 반환한다. `canApply`는 `true`, `alreadyApplied`는 `false`로 고정한다.
+  - 비로그인 사용자가 지원하기를 누르면 프론트는 `/login?next=/candidate/jobs/{jobId}?apply=1`로 이동하고, 로그인 후 원래 공고로 돌아온다.
+- 오류/예외:
+  - 공고가 없거나 마감되었으면 API-059와 같은 오류 코드를 반환한다.
+- 관련 ERD 테이블: companies, postings, file_assets
+
 ### API-060 POST /candidate/jobs/{jobId}/applications
 - 도메인: 지원자 - 채용공고/지원
 - 권한/인증: 지원자 / 지원자 사용자 로그인

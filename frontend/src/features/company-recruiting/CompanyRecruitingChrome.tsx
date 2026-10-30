@@ -54,11 +54,6 @@ export function CompanyNav({ active }: { active?: CompanyNavSection }) {
               })}
             </div>
           </div>
-          <div className={`gnb-item ${current === "performance" ? "active" : ""}`}>
-            <Link className="gnb-link" href={AI_PERFORMANCE_ROUTE} aria-current={current === "performance" ? "page" : undefined}>
-              {companyNavLabels.performance}
-            </Link>
-          </div>
         </nav>
         <div className="gnb-right">
           <button className="icon-btn" type="button" aria-label="알림">

@@ -1007,6 +1007,7 @@ export const publicInterviewApiPaths = {
 
 export const publicCandidateApiPaths = {
   jobs: "/api/v1/public/jobs",
+  jobDetail: (jobId: number) => `/api/v1/public/jobs/${jobId}`,
 } as const;
 
 export class CandidateApiError extends Error {
@@ -1032,6 +1033,7 @@ export interface CandidateApiClientOptions {
   headers?: HeadersInit;
   fetcher?: typeof fetch;
   jobsPath?: string;
+  jobDetailPath?: (jobId: number) => string;
 }
 
 export interface CandidateApiClient {
@@ -1198,7 +1200,7 @@ export function createCandidateApiClient(options: CandidateApiClientOptions = {}
       }),
     listJobs: (query = {}) =>
       request<ApiListResponse<CandidateJobSummary>>(options.jobsPath ?? candidateApiPaths.jobs, {}, query),
-    getJobDetail: (jobId) => request<ApiResponse<CandidateJobDetail>>(candidateApiPaths.jobDetail(jobId)),
+    getJobDetail: (jobId) => request<ApiResponse<CandidateJobDetail>>((options.jobDetailPath ?? candidateApiPaths.jobDetail)(jobId)),
     getApplyView: (jobId) => request<ApiResponse<CandidateApplyView>>(candidateApiPaths.applyView(jobId)),
     submitApplication: (jobId, body) =>
       request<ApiResponse<SubmitApplicationResponse>>(candidateApiPaths.submitApplication(jobId), {

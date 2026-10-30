@@ -1135,7 +1135,7 @@ export function CompanyInterviewSettingsPage({ postingId }: { postingId?: number
                   <p>사용할 NCS 역량을 선택하고 활성 배점 합계를 100으로 맞춥니다.</p>
                 </div>
                 <div className="toolbar">
-                  <span className="badge info">NCS canonical 3개 기준</span>
+                  <span className="badge info">NCS 표준 역량 3개</span>
                 </div>
               </div>
               {criteriaError ? <p className="notice danger">{criteriaError}</p> : null}

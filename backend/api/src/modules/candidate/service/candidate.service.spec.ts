@@ -743,6 +743,16 @@ async function run() {
   assert.equal(submittedJobDetail.data.alreadyApplied, true);
   assert.equal(submittedJobDetail.data.canApply, false);
 
+  // API-059A 비로그인 상세는 개인별 지원 여부를 계산하지 않는다.
+  const publicJobDetail = await service.getPublicJobDetail(1);
+  assert.equal(publicJobDetail.data.jobId, 1);
+  assert.equal(publicJobDetail.data.canApply, true);
+  assert.equal(publicJobDetail.data.alreadyApplied, false);
+  await assert.rejects(
+    () => service.getPublicJobDetail(Number.NaN),
+    (error) => error instanceof CandidateDomainError && error.code === "COMMON_VALIDATION_FAILED",
+  );
+
   const submittedJobList = await service.listJobs({ page: 1, limit: 20, sort: "createdAt", order: "desc" }, currentUser);
   const submittedJobSummary = submittedJobList.data.items.find((job) => job.jobId === 1);
   assert.equal(submittedJobSummary?.alreadyApplied, true);

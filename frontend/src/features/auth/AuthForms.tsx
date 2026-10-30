@@ -3,11 +3,12 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { AuthTokenResponse, UserType, apiFetch, getDefaultEntryPath } from "../../api/client";
+import { AuthTokenResponse, UserType, apiFetch } from "../../api/client";
 import { useAuth } from "./AuthProvider";
 import signupCompanyIcon from "./assets/signup-company.png";
 import signupCandidateIcon from "./assets/signup-candidate.png";
 import { getOAuthLoginMessageState } from "./oauth-login-message";
+import { POST_LOGIN_NEXT_STORAGE_KEY, resolvePostLoginPath } from "./routePolicy";
 import { buildSignupPayload } from "./signup-payload";
 
 function EyeIcon() {
@@ -209,7 +210,7 @@ export function LoginForm({ fixedUserType }: { fixedUserType?: UserType } = {}) 
         body: JSON.stringify({ userType, email, password }),
       });
       completeLogin(result);
-      router.replace(getDefaultEntryPath(result.user.userType));
+      router.replace(resolvePostLoginPath(new URLSearchParams(window.location.search).get("next"), result.user.userType));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "로그인에 실패했습니다.");
     }
@@ -219,6 +220,9 @@ export function LoginForm({ fixedUserType }: { fixedUserType?: UserType } = {}) 
     setMessage("");
     try {
       const result = await apiFetch<{ authorizationUrl: string }>(`/auth/google?userType=${userType}`);
+      const next = new URLSearchParams(window.location.search).get("next");
+      if (next) window.sessionStorage.setItem(POST_LOGIN_NEXT_STORAGE_KEY, next);
+      else window.sessionStorage.removeItem(POST_LOGIN_NEXT_STORAGE_KEY);
       window.location.href = result.authorizationUrl;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Google 로그인을 시작할 수 없습니다.");

@@ -4,8 +4,8 @@ if (candidateNavLabels.accountBilling !== "마이페이지") {
   throw new Error("Candidate account navigation label should be 마이페이지.");
 }
 
-if (candidateAccountBillingNav.length !== 5) {
-  throw new Error("Candidate account dropdown should expose 프로필, 지원 내역, 지원서 세트, 결제, 지표 tabs.");
+if (candidateAccountBillingNav.length !== 4) {
+  throw new Error("Candidate account dropdown should expose 프로필, 지원 내역, 지원서 세트, 결제 tabs.");
 }
 
 if (candidateAccountBillingNav[0]?.label !== "프로필" || candidateAccountBillingNav[0]?.href !== "/candidate/mypage") {
@@ -24,8 +24,8 @@ if (candidateAccountBillingNav[3]?.label !== "결제" || candidateAccountBilling
   throw new Error("Candidate account dropdown should link 결제 to the candidate billing page.");
 }
 
-if (candidateAccountBillingNav[4]?.label !== "지표" || candidateAccountBillingNav[4]?.href !== "/ai/performance") {
-  throw new Error("Candidate account dropdown should link 지표 to the AI performance page.");
+if (candidateAccountBillingNav.some((item) => (item.href as string) === "/ai/performance")) {
+  throw new Error("Candidate account dropdown should hide the internal 지표 page. (#436)");
 }
 
 if (!isCandidateAccountBillingPath("/candidate/billing")) {
