@@ -473,6 +473,8 @@ export interface InterviewRuntimeCountdownInput {
   currentQuestionLocked: boolean;
   busy: boolean;
   timerPhase: "PREPARING" | "ANSWERING";
+  // 녹화 시작 준비(실시간 STT 연결, 카메라 재연결) 중에는 답변 시간을 차감하지 않는다.
+  recordingStarting?: boolean;
 }
 
 export interface InterviewAnswerTimeoutInput extends InterviewRuntimeCountdownInput {
@@ -549,7 +551,8 @@ export const defaultApplicationFormState: CandidateApplicationFormState = {
   blogUrl: "",
   motivation: "",
   additionalInfo: "",
-  consentTypes: [...requiredApplicationConsents],
+  // 개인정보·AI 분석·녹화 동의는 지원자가 직접 체크해야 한다. 기본값으로 미리 체크하지 않는다.
+  consentTypes: [],
 };
 
 export function isCandidateNameConfirmed(name: string, email: string): boolean {
@@ -1581,6 +1584,7 @@ export function shouldRunInterviewRuntimeCountdown({
   currentQuestionLocked,
   busy,
   timerPhase,
+  recordingStarting = false,
 }: InterviewRuntimeCountdownInput): boolean {
   if (
     !setupCompleted ||
@@ -1589,7 +1593,8 @@ export function shouldRunInterviewRuntimeCountdown({
     questionSpeechPlaying ||
     !hasCurrentQuestion ||
     currentQuestionLocked ||
-    busy
+    busy ||
+    recordingStarting
   ) {
     return false;
   }

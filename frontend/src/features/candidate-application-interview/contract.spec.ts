@@ -548,8 +548,10 @@ const query: CandidateJobQuery = {
 // @ts-expect-error Closed postings are not a valid candidate list filter value.
 const closedFilterQuery: CandidateJobQuery = { postingStatus: "CLOSED" };
 
-assert.deepEqual(defaultApplicationFormState.consentTypes, requiredApplicationConsents);
-assert.equal(hasRequiredConsents(defaultApplicationFormState.consentTypes), true);
+// 필수 동의는 지원자가 직접 체크해야 하므로 기본값은 비어 있어야 한다.
+assert.deepEqual(defaultApplicationFormState.consentTypes, []);
+assert.equal(hasRequiredConsents(defaultApplicationFormState.consentTypes), false);
+assert.equal(hasRequiredConsents([...requiredApplicationConsents]), true);
 
 const submitRequest: SubmitApplicationRequest = toSubmitApplicationRequest({
   candidateName: " Kim Applicant ",
@@ -1345,6 +1347,36 @@ assert.equal(
     currentQuestionLocked: false,
     busy: false,
     timerPhase: "ANSWERING",
+  }),
+  false,
+);
+// 녹화 시작 준비(실시간 STT 연결 등) 중에는 답변 시간을 차감하지 않는다.
+assert.equal(
+  shouldRunInterviewRuntimeCountdown({
+    setupCompleted: true,
+    introCompleted: true,
+    questionSpeechCompleted: true,
+    questionSpeechPlaying: false,
+    hasCurrentQuestion: true,
+    currentQuestionLocked: false,
+    busy: false,
+    timerPhase: "ANSWERING",
+    recordingStarting: true,
+  }),
+  false,
+);
+assert.equal(
+  shouldHandleInterviewAnswerTimeout({
+    remainingSeconds: 0,
+    timerPhase: "ANSWERING",
+    setupCompleted: true,
+    introCompleted: true,
+    questionSpeechCompleted: true,
+    questionSpeechPlaying: false,
+    hasCurrentQuestion: true,
+    currentQuestionLocked: false,
+    busy: false,
+    recordingStarting: true,
   }),
   false,
 );

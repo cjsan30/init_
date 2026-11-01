@@ -1962,7 +1962,7 @@ export function CandidateInterviewGuidePage({ applicationId }: { applicationId: 
     });
   }
 
-  function startGuideMicrophoneMeter(stream: MediaStream) {
+  function startGuideMicrophoneMeter(stream: MediaStream, onVoiceDetected?: () => void) {
     stopGuideMicrophoneMeter();
     const [audioTrack] = stream.getAudioTracks();
     if (!audioTrack) return;
@@ -1971,11 +1971,13 @@ export function CandidateInterviewGuidePage({ applicationId }: { applicationId: 
     if (!AudioContextConstructor) return;
 
     const audioContext = new AudioContextConstructor();
+    void resumeAudioContext(audioContext);
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
     audioContext.createMediaStreamSource(stream).connect(analyser);
     audioContextRef.current = audioContext;
     const samples = new Uint8Array(analyser.frequencyBinCount);
+    let voiceDetected = false;
 
     const tick = () => {
       analyser.getByteTimeDomainData(samples);
@@ -1985,6 +1987,11 @@ export function CandidateInterviewGuidePage({ applicationId }: { applicationId: 
       });
       const level = Math.min(100, Math.round((peak / 128) * 100));
       setMicrophoneLevel(level);
+      // 1.8초 점검 때 소리를 놓쳤더라도 이후 실시간 미터에서 입력이 잡히면 통과로 바꾼다.
+      if (!voiceDetected && hasMicrophoneInput(level)) {
+        voiceDetected = true;
+        onVoiceDetected?.();
+      }
       microphoneFrameRef.current = window.requestAnimationFrame(tick);
     };
 
@@ -2022,7 +2029,10 @@ export function CandidateInterviewGuidePage({ applicationId }: { applicationId: 
         : { ok: false, peakLevel: 0, message: formatMicrophoneStatus(streamResult) };
       const networkQuality = await checkInterviewNetworkQuality();
       const cameraOk = cameraQuality.ok && !cameraFraming.blocking;
-      const microphoneOk = audioEnabled && isMicrophoneTrackReady(stream);
+      const microphoneTrackReady = audioEnabled && isMicrophoneTrackReady(stream);
+      // 입력이 작거나 큰 것은 경고만 하고, 소리가 전혀 들어오지 않을 때만 시작을 막는다.
+      const microphoneOk = microphoneTrackReady && hasMicrophoneInput(microphoneQuality.peakLevel);
+      const waitingForMicrophoneInput = microphoneTrackReady && !microphoneOk;
       setCameraReady(cameraOk);
       setCameraFramingState(cameraFraming.state);
       setMicrophoneReady(microphoneOk);
@@ -2035,8 +2045,22 @@ export function CandidateInterviewGuidePage({ applicationId }: { applicationId: 
         networkStable: networkQuality.ok,
       });
       startGuideCameraQualityMonitor(previewInfo, fallbackLabel);
+      let microphoneDetectedByMeter = false;
       if (audioEnabled) {
-        startGuideMicrophoneMeter(stream);
+        startGuideMicrophoneMeter(
+          stream,
+          waitingForMicrophoneInput
+            ? () => {
+                microphoneDetectedByMeter = true;
+                setMicrophoneReady(true);
+                setDeviceState((current) => ({ ...current, microphoneGranted: true }));
+                setMicrophoneStatus(`${streamResult.audioLabel || "선택된 마이크"} · live · 음성 입력이 감지되었습니다.`);
+                if (!fallbackLabel && cameraOk && networkQuality.ok) {
+                  setMessage("카메라 밝기, 마이크 입력, 네트워크 상태가 적정합니다. 면접 시작을 눌러주세요.");
+                }
+              }
+            : undefined,
+        );
       } else {
         setMicrophoneLevel(0);
       }
@@ -2044,9 +2068,11 @@ export function CandidateInterviewGuidePage({ applicationId }: { applicationId: 
       setMessage(
         fallbackLabel
           ? `카메라를 연결했습니다. ${fallbackLabel} 마이크 권한을 확인한 뒤 면접을 시작해주세요.`
-          : cameraOk && microphoneOk && networkQuality.ok
+          : cameraOk && (microphoneOk || microphoneDetectedByMeter) && networkQuality.ok
             ? "카메라 밝기, 마이크 입력, 네트워크 상태가 적정합니다. 면접 시작을 눌러주세요."
-            : "장치 점검 기준을 통과하지 못했습니다. 안내에 따라 카메라 위치, 조명, 마이크 입력을 조정해주세요.",
+            : waitingForMicrophoneInput && cameraOk && networkQuality.ok
+              ? "마이크 입력이 감지되지 않았습니다. 테스트 문장을 소리 내어 읽어주세요. 소리가 감지되면 자동으로 통과됩니다."
+              : "장치 점검 기준을 통과하지 못했습니다. 안내에 따라 카메라 위치, 조명, 마이크 입력을 조정해주세요.",
       );
     } catch (previewError) {
       setCameraReady(false);
@@ -3448,6 +3474,7 @@ function InterviewRuntimePanel({
   const [subtitlesEnabled, setSubtitlesEnabled] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(DEFAULT_INTERVIEW_QUESTION_TIME_LIMIT_SECONDS);
   const [timerPhase, setTimerPhase] = useState<RuntimeTimerPhase>("ANSWERING");
+  const [recordingStarting, setRecordingStarting] = useState(false);
   const [introCompleted, setIntroCompleted] = useState(false);
   const [questionSpeechCompleted, setQuestionSpeechCompleted] = useState(false);
   const [questionSpeechPlaying, setQuestionSpeechPlaying] = useState(false);
@@ -4919,6 +4946,7 @@ function InterviewRuntimePanel({
       currentQuestionLocked,
       busy,
       timerPhase,
+      recordingStarting,
     })) {
       return;
     }
@@ -4933,6 +4961,7 @@ function InterviewRuntimePanel({
     introCompleted,
     questionSpeechCompleted,
     questionSpeechPlaying,
+    recordingStarting,
     setupCompleted,
     timerPhase,
   ]);
@@ -4986,6 +5015,7 @@ function InterviewRuntimePanel({
         hasCurrentQuestion: currentQuestionStateReady,
         currentQuestionLocked,
         busy,
+        recordingStarting,
       })
     ) {
       return;
@@ -5003,6 +5033,7 @@ function InterviewRuntimePanel({
     introCompleted,
     questionSpeechCompleted,
     questionSpeechPlaying,
+    recordingStarting,
     remainingSeconds,
     setupCompleted,
     timerPhase,
@@ -6503,6 +6534,7 @@ function InterviewRuntimePanel({
     if (!AudioContextConstructor) return;
 
     const audioContext = new AudioContextConstructor();
+    void resumeAudioContext(audioContext);
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
     audioContext.createMediaStreamSource(stream).connect(analyser);
@@ -6979,6 +7011,16 @@ function InterviewRuntimePanel({
   }
 
   async function handleStartRecording() {
+    // 녹화가 실제로 시작될 때까지(실시간 STT 연결, 카메라 재연결 대기) 답변 시간을 멈춘다.
+    setRecordingStarting(true);
+    try {
+      await startRecordingForCurrentQuestion();
+    } finally {
+      setRecordingStarting(false);
+    }
+  }
+
+  async function startRecordingForCurrentQuestion() {
     if (!data || !currentQuestion) return;
     if (!questionSpeechCompleted || questionSpeechPlaying || timerPhase !== "ANSWERING") {
       setMessage("질문 음성 안내가 끝난 뒤 녹화를 시작해주세요.");
@@ -12682,6 +12724,23 @@ function getCameraFramingNotice(): CameraFramingResult {
   };
 }
 
+// 이 값 이하의 피크는 무음(가상 마이크, 음소거 장치 등)으로 본다.
+const MICROPHONE_SILENT_PEAK_LEVEL = 5;
+
+function hasMicrophoneInput(peakLevel: number): boolean {
+  return peakLevel > MICROPHONE_SILENT_PEAK_LEVEL;
+}
+
+// 버튼 클릭 뒤 await를 거쳐 만든 AudioContext는 Chrome에서 suspended로 남아 무음으로 읽힐 수 있다.
+async function resumeAudioContext(audioContext: AudioContext): Promise<void> {
+  if (audioContext.state !== "suspended") return;
+  try {
+    await audioContext.resume();
+  } catch {
+    // resume이 거부돼도 측정은 계속한다. 무음으로 읽히면 실시간 미터가 다시 판정한다.
+  }
+}
+
 async function measureMicrophoneQuality(
   stream: MediaStream,
   onLevel?: (level: number) => void,
@@ -12697,6 +12756,7 @@ async function measureMicrophoneQuality(
   }
 
   const audioContext = new AudioContextConstructor();
+  await resumeAudioContext(audioContext);
   const analyser = audioContext.createAnalyser();
   analyser.fftSize = 256;
   audioContext.createMediaStreamSource(stream).connect(analyser);
@@ -12728,7 +12788,7 @@ async function measureMicrophoneQuality(
 
   await audioContext.close();
 
-  if (peakLevel <= 5) {
+  if (!hasMicrophoneInput(peakLevel)) {
     return { ok: false, peakLevel, message: "마이크 입력이 감지되지 않습니다. 테스트 문장을 소리 내어 읽어주세요." };
   }
   if (peakLevel < 20) {
@@ -12817,7 +12877,11 @@ function formatMicrophoneStatus(result: CameraStreamResult): string {
 function formatMicrophoneQualityStatus(result: CameraStreamResult, quality: MicrophoneQualityResult): string {
   const label = result.audioLabel || "선택된 마이크";
   const state = result.audioState ?? "live";
-  const message = quality.ok ? quality.message : "마이크가 연결되었습니다. 입력이 작으면 실제 답변 때 조금 더 크게 말해주세요.";
+  const message = quality.ok
+    ? quality.message
+    : hasMicrophoneInput(quality.peakLevel)
+      ? "마이크가 연결되었습니다. 입력이 작으면 실제 답변 때 조금 더 크게 말해주세요."
+      : "마이크 입력이 감지되지 않았습니다. 테스트 문장을 소리 내어 읽어주세요.";
   return `${label} · ${state} · 입력 ${quality.peakLevel}% · ${message}`;
 }
 
