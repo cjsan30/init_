@@ -174,6 +174,8 @@ export class PrismaSyntheticApplicantStore implements SyntheticApplicantStore {
       await tx.candidateActivity.deleteMany({ where: { candidateId: { in: candidateIds } } });
       await tx.candidateCredential.deleteMany({ where: { candidateId: { in: candidateIds } } });
       await tx.candidateProfile.deleteMany({ where: { candidateId: { in: candidateIds } } });
+      // 실시간 사용량 로그는 user FK를 RESTRICT로 보존하므로 합성 계정은 사용자보다 먼저 지운다.
+      await tx.aiRealtimeUsageLog.deleteMany({ where: { userId: { in: userIds } } });
       await tx.user.deleteMany({ where: { userId: { in: userIds } } });
       await tx.syntheticApplicantRecord.updateMany({
         where: { datasetId, ordinal: { in: records.map((record) => record.ordinal) }, cleanedAt: null },

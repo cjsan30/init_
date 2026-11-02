@@ -2385,6 +2385,31 @@ Allocation Examples:
 - Errors: `COMMON_UNAUTHORIZED`, `COMMON_VALIDATION_FAILED`, `COMMON_CONFLICT`, `COMMON_EXTERNAL_SERVICE_FAILED`
 - Related Tables: 없음
 
+### API-AI-RT-001 POST /realtime-usage/reports
+
+- 관련 화면: 음성 면접관을 쓰는 모의면접·채용면접·public 면접 진행 화면, 면접관 튜닝 화면
+- 상태 코드: `202 Accepted`
+- 인증: JWT 대신 `usageReportToken`을 검증한다. 이 token은 API-050-RT, API-070-RT, API-094-RT, API-097-RT가 `provider=openai`일 때 응답 `data.usageReportToken`으로 함께 발급한다(mock provider는 생략). 서버 서명, 유효 6시간, 사용자·면접 세션·사용 유형(`INTERVIEWER_VOICE` | `INTERVIEWER_PREVIEW`)·model을 담는다.
+- Route Owner: `backend/api/src/modules/interview`의 `RealtimeUsageController` (`InterviewModule`, owner D; 비용 집계는 E 리뷰 필요)
+- Request Body:
+  - `usageReportToken: string`
+  - `responseCount: number` (0..10000)
+  - `inputTextTokens`, `inputAudioTokens`, `cachedInputTokens`, `outputTextTokens`, `outputAudioTokens: number` (각 0..5,000,000)
+  - `startedAt?: string`, `endedAt?: string` (ISO 8601)
+- Response `data`:
+  - `accepted: true`
+  - `estimatedCostUsd: number | null` (단가 환경변수가 하나라도 없으면 `null`)
+- Business Rules:
+  - 브라우저는 OpenAI `response.done`의 `response.usage`를 연결 동안 합산하고, 연결 종료나 페이지 이탈 시 한 번 보고한다. cached token은 text/audio 입력에서 빼서 `cachedInputTokens`로 보낸다.
+  - 비용은 서버가 `AI_REALTIME_{TEXT,AUDIO,CACHED}_*_USD_PER_1M_TOKENS`로 계산하며 클라이언트가 보낸 비용은 받지 않는다.
+  - 같은 token의 재보고는 `ai_realtime_usage_logs.report_key`로 한 row만 남기고 마지막 값으로 갱신한다.
+  - 사용자·세션·유형·model은 token 값만 쓰고 body로 바꿀 수 없다.
+  - 답변 실시간 STT relay(`.../realtime-stt-relay` WebSocket)는 이 API를 쓰지 않고, API 서버가 전달한 PCM 오디오 길이로 `STT_RELAY`, `SERVER_MEASURED` row를 직접 남긴다.
+  - 사용량 기록 실패는 면접 진행을 막지 않는다.
+- Errors: `COMMON_VALIDATION_FAILED`(token 위조·만료, 범위 초과)
+- Related Tables: `ai_realtime_usage_logs`
+- AI 비용 요약(`GET /ai/performance/summary`) 응답의 `realtime`에 최근 30일 `ai_realtime_usage_logs`를 `byUsageType`(유형·측정 주체별 건수, 비용 미계산 건수 `unpricedCount`, 비용, 오디오 ms, token)으로 합산한다. 비용 상위 10명 `topUsers`(userId, 건수, 비용, 오디오 ms)는 다른 사용자 정보이므로 `ADMIN` 호출에만 포함한다.
+
 ### API-098 GET /company/interviews/applications/{applicationId}/resume-questions
 - 도메인: 기업 - 면접관리
 - 권한/인증: 기업 / 기업 사용자 로그인

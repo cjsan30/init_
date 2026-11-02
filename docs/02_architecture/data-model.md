@@ -832,6 +832,34 @@ NCS profile 집계 row는 `(report_id, ncs_profile_id)`를 unique key로 사용�
 
 이미 `attempt_count=max_attempts`인 stale `RUNNING`은 추가 provider 실행 없이 조건부 갱신으로 `RETRY_EXHAUSTED`가 되고 terminal 후처리를 재개한다.
 
+### ai_realtime_usage_logs
+
+worker job이 아닌 OpenAI Realtime 연결(답변 실시간 STT relay, 음성 면접관 WebRTC)의 사용량과 추정 비용을 사용자 단위로 남긴다. `ai_process_logs`는 queue 상태 전이 정본이므로 상태가 없는 실시간 사용량을 섞지 않는다. 비용 화면과 사용자별 사용량 확인, 이후 사용자별 한도 적용의 근거로 쓴다.
+
+| Column | Definition | Description |
+| --- |--- |--- |
+| realtime_usage_log_id | BIGINT PRIMARY KEY | 실시간 사용량 로그 PK |
+| usage_type | VARCHAR(40) NOT NULL | 사용 유형: STT_RELAY, INTERVIEWER_VOICE, INTERVIEWER_PREVIEW |
+| usage_source | VARCHAR(40) NOT NULL | 측정 주체: SERVER_MEASURED(API 서버가 relay한 오디오를 직접 계산), CLIENT_REPORTED(브라우저가 OpenAI `response.done` usage를 합산해 보고) |
+| user_id | BIGINT NOT NULL | 사용한 사용자 FK |
+| session_id | BIGINT | 관련 면접 세션 FK. 면접관 튜닝 화면은 NULL |
+| report_key | VARCHAR(80) UNIQUE | CLIENT_REPORTED 중복 보고 방지 키(발급한 보고 token의 id). SERVER_MEASURED는 NULL |
+| model_name | VARCHAR(120) | 사용 model 이름 |
+| audio_input_ms | INTEGER | OpenAI로 보낸 입력 오디오 길이(ms). STT relay는 서버가 전달한 PCM 바이트로 계산한다 |
+| input_tokens | INTEGER | 입력 token 합계(text+audio+cached) |
+| output_tokens | INTEGER | 출력 token 합계(text+audio) |
+| estimated_cost_usd | DECIMAL(12,6) | 환경변수 단가로 계산한 추정 비용 |
+| cost_metadata_json | TEXT | 단가, token 세부 항목, 보고 응답 수 등 계산 근거. 답변·질문 원문은 저장하지 않는다 |
+| started_at | TIMESTAMP | 연결 시작 시각 |
+| ended_at | TIMESTAMP | 연결 종료 시각 |
+| created_at | TIMESTAMP NOT NULL | 생성 시각 |
+
+- STT relay는 연결 하나(답변 1회 녹음)마다 오디오가 1ms 이상 전달된 경우에만 한 row를 남긴다. 비용은 `AI_REALTIME_STT_USD_PER_MINUTE × 오디오 분`이다.
+- 음성 면접관은 브라우저만 OpenAI와 직접 연결하므로 서버가 측정할 수 없다. 서버가 Realtime 자격 증명을 발급할 때 사용자·세션·유형·model을 담은 서명 보고 token(`usageReportToken`, 유효 6시간)을 함께 주고, 브라우저가 연결 종료 시 이 token과 usage를 보고하며 `CLIENT_REPORTED`로 구분한다. 같은 token은 한 번만 기록된다(`report_key`). 비용은 `AI_REALTIME_{TEXT,AUDIO,CACHED}_*_USD_PER_1M_TOKENS` 단가로 서버가 계산하고, 클라이언트가 보낸 비용 값은 받지 않는다.
+- 사용량 기록 실패는 면접 진행을 막지 않는다.
+- 단가 환경변수가 하나라도 없으면 `estimated_cost_usd`를 NULL로 두고 $0으로 기록하지 않는다. 비용 요약은 NULL 건수를 `unpricedCount`로 따로 보여 준다.
+- user FK는 사용량 이력 보존을 위해 RESTRICT다. 사용자를 실제 삭제하는 합성 지원자 정리는 이 테이블 행을 먼저 지운다.
+
 ### ai_guardrail_logs
 
 | Column | Definition | Description |

@@ -1,4 +1,10 @@
+import { getApiBaseUrl } from "@/api/api-base-url";
 import type { RealtimeSessionCredentials } from "./api";
+import {
+  buildRealtimeUsageReport,
+  createRealtimeUsageAccumulator,
+  sendRealtimeUsageReport,
+} from "./realtime-usage-report";
 
 const DEFAULT_REALTIME_CONNECTION_READY_TIMEOUT_MS = 10000;
 
@@ -352,6 +358,24 @@ export async function createRealtimeInterviewWebRtcConnection({
 
   const peerConnection = peerConnectionFactory();
   const dataChannel = peerConnection.createDataChannel("oai-events");
+  const usageAccumulator = createRealtimeUsageAccumulator();
+  const usageStartedAt = new Date();
+  let usageReported = false;
+  const reportUsage = () => {
+    if (usageReported) return;
+    const report = buildRealtimeUsageReport({
+      usageReportToken: session.usageReportToken,
+      accumulator: usageAccumulator,
+      startedAt: usageStartedAt,
+      endedAt: new Date(),
+    });
+    if (!report) return;
+    usageReported = true;
+    sendRealtimeUsageReport(report, getApiBaseUrl(), fetcher);
+  };
+  // 탭을 닫거나 다른 페이지로 이동해 close()가 불리지 않아도 사용량을 보고한다.
+  const pageHideTarget = typeof window !== "undefined" ? window : undefined;
+  pageHideTarget?.addEventListener("pagehide", reportUsage);
   let attachedRemoteStream: MediaStream | null = null;
   let fallbackRemoteStream: MediaStream | null = null;
   let manuallyClosing = false;
@@ -398,6 +422,8 @@ export async function createRealtimeInterviewWebRtcConnection({
   }
   const closeConnection = () => {
     manuallyClosing = true;
+    reportUsage();
+    pageHideTarget?.removeEventListener("pagehide", reportUsage);
     clearReadyTimeout();
     if (!readySettled) {
       readySettled = true;
@@ -439,8 +465,9 @@ export async function createRealtimeInterviewWebRtcConnection({
     failConnection(new Error("Realtime WebRTC data channel closed before the interview connection was finished."));
   }
   dataChannel.onmessage = (event) => {
-    if (!onEvent) return;
-    onEvent(parseRealtimeDataChannelMessage(event.data));
+    const parsed = parseRealtimeDataChannelMessage(event.data);
+    usageAccumulator.add(parsed);
+    onEvent?.(parsed);
   };
 
   peerConnection.ontrack = (event) => {

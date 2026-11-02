@@ -272,6 +272,8 @@ export interface RealtimeSessionCredentials {
   clientSecretType: "ephemeral";
   expiresAt: string;
   endpoint: string;
+  /** OpenAI 연결 종료 시 브라우저가 usage를 보고할 때 쓰는 서명 token. mock provider는 비운다. */
+  usageReportToken?: string;
 }
 
 export interface RealtimeInterviewSessionResult extends RealtimeSessionCredentials {

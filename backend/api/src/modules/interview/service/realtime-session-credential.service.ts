@@ -1,10 +1,16 @@
 import { Inject, Injectable, Optional } from "@nestjs/common";
 import { CandidateDomainError } from "../../candidate";
 import type { RealtimeSessionCredentials } from "../interview.runtime.types";
+import { RealtimeUsageService, type RealtimeReportedUsageType } from "./realtime-usage.service";
 
 export interface IssueOpenAiRealtimeCredentialsInput {
   instructions: string;
   safetyIdentifier: string;
+  usage: {
+    userId: number;
+    sessionId?: number;
+    usageType: RealtimeReportedUsageType;
+  };
 }
 
 export const REALTIME_SESSION_FETCH = Symbol("REALTIME_SESSION_FETCH");
@@ -35,6 +41,9 @@ export class RealtimeSessionCredentialService {
     @Optional()
     @Inject(REALTIME_SESSION_FETCH)
     private readonly fetcher: typeof fetch = fetch,
+    @Optional()
+    @Inject(RealtimeUsageService)
+    private readonly usage?: RealtimeUsageService,
   ) {}
 
   async issueOpenAi(
@@ -184,6 +193,7 @@ export class RealtimeSessionCredentialService {
       clientSecretType: "ephemeral",
       expiresAt,
       endpoint: `${baseUrl}/v1/realtime/calls`,
+      usageReportToken: this.usage?.issueReportToken({ ...input.usage, model }),
     };
   }
 }

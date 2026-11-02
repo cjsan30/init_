@@ -5,6 +5,8 @@ import { AiPerformanceQueryDto, ClientPerformanceLogRequestDto } from "../dto/ai
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 500;
+const REALTIME_USAGE_WINDOW_DAYS = 30;
+const REALTIME_TOP_USER_LIMIT = 10;
 
 const AI_WORK_CATEGORIES = [
   "VOICE_TRANSCRIPTION",
@@ -148,10 +150,11 @@ export class AiPerformanceService {
     });
   }
 
-  async summary(query: AiPerformanceQueryDto) {
+  async summary(query: AiPerformanceQueryDto, currentUser?: CurrentUser) {
     const sampleLimit = normalizeLimit(query.limit ?? MAX_LIMIT);
     const jobs = await this.listJobs({ ...query, limit: sampleLimit });
     const clientEvents = await this.listClientEvents({ eventName: query.eventName, limit: sampleLimit });
+    const realtime = await this.summarizeRealtimeUsage(currentUser?.userType === "ADMIN");
     return {
       sampleLimit,
       jobs: summarizeTimedItems(jobs),
@@ -166,7 +169,56 @@ export class AiPerformanceService {
       },
       byProcessType: groupByProcessType(jobs),
       byWorkCategory: groupByWorkCategory(jobs),
-      byClientNextStep: groupByClientNextStep(clientEvents)
+      byClientNextStep: groupByClientNextStep(clientEvents),
+      realtime
+    };
+  }
+
+  // worker job이 아닌 실시간 STT relay·음성 면접관 사용량. 최근 30일을 유형별로 합산하고,
+  // 사용자별 비용 상위 목록은 다른 사용자 정보이므로 ADMIN에게만 준다.
+  private async summarizeRealtimeUsage(includeTopUsers: boolean) {
+    const since = new Date(Date.now() - REALTIME_USAGE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+    const where = { createdAt: { gte: since } };
+    const sums = { estimatedCostUsd: true, audioInputMs: true, inputTokens: true, outputTokens: true } as const;
+    const [byType, byUser] = await Promise.all([
+      this.prisma.aiRealtimeUsageLog.groupBy({
+        by: ["usageType", "usageSource"],
+        where,
+        // _count.estimatedCostUsd는 비용이 계산된(NULL이 아닌) 건수다.
+        _count: { _all: true, estimatedCostUsd: true },
+        _sum: sums
+      }),
+      !includeTopUsers ? Promise.resolve([]) : this.prisma.aiRealtimeUsageLog.groupBy({
+        by: ["userId"],
+        where,
+        _count: { _all: true },
+        _sum: { estimatedCostUsd: true, audioInputMs: true },
+        orderBy: { _sum: { estimatedCostUsd: "desc" } },
+        take: REALTIME_TOP_USER_LIMIT
+      })
+    ]);
+    const byUsageType = byType.map((row) => ({
+      usageType: row.usageType,
+      usageSource: row.usageSource,
+      count: row._count._all,
+      unpricedCount: row._count._all - row._count.estimatedCostUsd,
+      estimatedCostUsd: round6(toNumber(row._sum.estimatedCostUsd) ?? 0),
+      audioInputMs: row._sum.audioInputMs ?? 0,
+      inputTokens: row._sum.inputTokens ?? 0,
+      outputTokens: row._sum.outputTokens ?? 0
+    }));
+    return {
+      windowDays: REALTIME_USAGE_WINDOW_DAYS,
+      estimatedCostUsd: round6(byUsageType.reduce((sum, row) => sum + row.estimatedCostUsd, 0)),
+      unpricedCount: byUsageType.reduce((sum, row) => sum + row.unpricedCount, 0),
+      audioInputMs: byUsageType.reduce((sum, row) => sum + row.audioInputMs, 0),
+      byUsageType,
+      topUsers: !includeTopUsers ? undefined : byUser.map((row) => ({
+        userId: Number(row.userId),
+        count: row._count._all,
+        estimatedCostUsd: round6(toNumber(row._sum.estimatedCostUsd) ?? 0),
+        audioInputMs: row._sum.audioInputMs ?? 0
+      }))
     };
   }
 

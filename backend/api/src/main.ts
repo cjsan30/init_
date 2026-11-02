@@ -10,6 +10,7 @@ import { createCorsOriginDelegate } from "./shared/cors-origin";
 import { setupSwagger } from "./swagger/swagger";
 import { InterviewService } from "./modules/interview/service/interview.service";
 import { attachRealtimeSttRelayServer } from "./modules/interview/realtime-stt-relay.server";
+import { RealtimeUsageService } from "./modules/interview/service/realtime-usage.service";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -49,6 +50,7 @@ async function bootstrap() {
 
   attachRealtimeSttRelayServer(app.getHttpServer(), {
     interviewService: app.get(InterviewService),
+    usageService: app.get(RealtimeUsageService),
   });
 
   const port = Number(process.env.PORT ?? 3001);

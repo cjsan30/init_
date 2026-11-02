@@ -896,6 +896,11 @@ export class InterviewService {
     const credentials = await this.realtimeCredentials.issueOpenAi({
       instructions: this.buildRealtimeInterviewInstructions(session),
       safetyIdentifier: `candidate-${currentUser.candidateId}`,
+      usage: {
+        userId: currentUser.userId,
+        sessionId: session.sessionId,
+        usageType: "INTERVIEWER_VOICE",
+      },
     });
     return {
       ...credentials,

@@ -82,6 +82,7 @@ ERDCloud SQL을 사람이 읽는 테이블/관계 문서로 변환한다.
 | notifications | notification_id | 7 | 메일/인앱 알림 | user_id -> users.user_id / application_id -> applications.application_id |
 | ai_process_logs | process_log_id | 8 | AI 비동기 처리 로그 | application_id -> applications.application_id / session_id -> interview_sessions.session_id |
 | ai_guardrail_logs | guardrail_log_id | 6 | AI 안전 검증 로그 | process_log_id -> ai_process_logs.process_log_id |
+| ai_realtime_usage_logs | realtime_usage_log_id | 14 | OpenAI Realtime STT relay/음성 면접관 사용량과 추정 비용 | user_id -> users.user_id / session_id -> interview_sessions.session_id |
 | embeddings | embedding_id | 15 | 검색/추천용 임베딩 | posting_id -> postings.posting_id / tag_id -> criterion_tags.tag_id / question_id -> question_bank.question_id / document_id -> application_documents.document_id / answer_id -> interview_answers.answer_id / report_id -> evaluation_reports.report_id |
 | synthetic_applicant_datasets | dataset_id | 17 | 합성 지원자 실행 옵션, 상태와 cleanup audit | posting_id -> postings.posting_id / company_id -> companies.company_id |
 | synthetic_applicant_records | record_id | 13 | dataset별 생성 user/candidate/application ID manifest | dataset_id -> synthetic_applicant_datasets.dataset_id |
@@ -148,6 +149,8 @@ ERDCloud SQL을 사람이 읽는 테이블/관계 문서로 변환한다.
 | ai_process_logs | application_id | applications.application_id | fk_ai_process_logs_application |
 | ai_process_logs | session_id | interview_sessions.session_id | fk_ai_process_logs_session |
 | ai_guardrail_logs | process_log_id | ai_process_logs.process_log_id | fk_ai_guardrail_logs_process |
+| ai_realtime_usage_logs | user_id | users.user_id | fk_ai_realtime_usage_logs_user |
+| ai_realtime_usage_logs | session_id | interview_sessions.session_id | fk_ai_realtime_usage_logs_session |
 | embeddings | posting_id | postings.posting_id | fk_embeddings_posting |
 | embeddings | tag_id | criterion_tags.tag_id | fk_embeddings_tag |
 | embeddings | question_id | question_bank.question_id | fk_embeddings_question |

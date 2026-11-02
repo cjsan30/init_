@@ -28,6 +28,7 @@ export class InterviewerPreviewRealtimeService {
         "Speak only the exact marked script once and say nothing else.",
       ].join(" "),
       safetyIdentifier: `preview-${user.userType.toLowerCase()}-${user.userId}`,
+      usage: { userId: Number(user.userId), usageType: "INTERVIEWER_PREVIEW" },
     });
     const data: RealtimePreviewSessionResult = {
       ...issuedCredentials,
