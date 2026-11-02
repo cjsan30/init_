@@ -111,6 +111,7 @@ DTO와 API client 타입은 아래 naming을 따른다. 같은 요청/응답 타
 | `application_interview_questions` (NQ-M3 예정) | 개인화 질문, NCS 정렬 결과, 생성 snapshot | E | C/D |
 | `interview_session_questions` (NQ-M4 예정) | 공통·개인화 질문 합성 및 NCS snapshot | D | C/E |
 | `synthetic_applicant_datasets`, `synthetic_applicant_records` | importer 실행, manifest, cleanup audit | D | A/B/C/E/PM |
+| `ai_realtime_usage_logs` | 실시간 STT relay 오디오 측정, 음성 면접관 usage 보고 수신(`RealtimeUsageService`) | D | E(비용 요약 `realtime` 집계), A(운영 비용 확인) |
 
 공유 테이블을 수정하는 PR은 위 field owner를 기준으로 리뷰어를 지정한다. owner가 아닌 모듈에서 직접 write가 필요하면 먼저 `docs/03_contracts`와 이 문서를 수정한다.
 
@@ -141,7 +142,7 @@ DTO와 API client 타입은 아래 naming을 따른다. 같은 요청/응답 타
 | --- |--- |--- |--- |--- |
 | auth-common | users, companies, candidate_profiles | Redis/TTL cache | /auth/* | 이메일 인증 코드는 DB 저장 금지 |
 | company | postings, evaluation_criteria, auto_screening_policies, question_bank, applications screening memo/reviewer decision/result confirmation | reports, candidate_profiles, automatic screening result | /company/* | 자동판정 원본을 보존하고 필요한 지원자만 검토 초안을 수정한 뒤 공고 단위로 확정·알림 등록 |
-| candidate-interview | interview_sessions, interview_session_questions, interview_answers, consent_records | applications, postings, question_bank | /candidate/*interview* | 모의면접과 채용면접은 `interview_type`으로 분리 |
+| candidate-interview | interview_sessions, interview_session_questions, interview_answers, consent_records, ai_realtime_usage_logs | applications, postings, question_bank | /candidate/*interview* | 모의면접과 채용면접은 `interview_type`으로 분리 |
 | ai-report | evaluation_reports, report_scores, report_evidences, ai_process_logs, ai_guardrail_logs, embeddings, applications automatic screening projection | documents, answers, criteria, auto screening policy | /reports/*, /ai/* | 가드레일 통과 전 결과 저장 금지, 점수 없음은 RETRY |
 | file-storage | file_assets | users | /candidate/resume, /company/profile/logo | 원본 파일은 Object Storage |
 | notification | notifications | users, applications | invitation/notification endpoints | 결과 확정 IN_APP/EMAIL 알림 멱등 등록, 메일 발송 실패 상태 기록 |

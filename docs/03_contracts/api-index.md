@@ -102,6 +102,7 @@ NestJS 구현은 API path를 그대로 controller 파일명으로 흩뜨리지 �
 | API-040 | 기업 - 면접관리 | PATCH | /company/interviews/time-policy | 면접 시간 정책 설정 | 기업 / 기업 사용자 로그인 | N | 200 OK |
 | API-097 | 기업 - 면접관리 | PATCH | /company/interviews/question-generation-policy | JD·이력서 질문 개수와 NCS 배분 정책 저장 | 기업 / 기업 사용자 로그인 | N | 200 OK |
 | API-097-RT | 면접관 튜닝 | POST | /interviewer-preview/realtime-session | 로그인 사용자용 독립 OpenAI Realtime 립싱크 튜닝 세션 생성 | 로그인 사용자 | N | 200 OK |
+| API-AI-RT-001 | 실시간 AI 사용량 | POST | /realtime-usage/reports | 음성 면접관 Realtime 연결 종료 시 브라우저가 합산한 usage 보고 | `usageReportToken` (realtime-session 응답) | N | 202 Accepted |
 | API-098 | 기업 - 면접관리 | GET | /company/interviews/applications/{applicationId}/resume-questions | 지원자별 이력서 질문 생성 상태·검토 목록 조회 | 기업 / 기업 사용자 로그인 | N | 200 OK |
 | API-099 | 기업 - 면접관리 | POST | /company/interviews/applications/{applicationId}/resume-questions/retry | 실패·검토 필요 이력서 질문 재생성 | 기업 / 기업 사용자 로그인 | Y | 202 Accepted |
 | API-100 | AI/리포트 처리 | POST | /admin/applications/{applicationId}/screening-retry | RETRY 상태 REPORT 명시적 재처리 | ADMIN | Y | 202 Accepted |

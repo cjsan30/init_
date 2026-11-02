@@ -1227,6 +1227,41 @@ CREATE TABLE ai_process_logs (
     created_at TIMESTAMP NOT NULL
 );
 
+CREATE TABLE ai_realtime_usage_logs (
+    -- 실시간 사용량 로그 PK
+    realtime_usage_log_id BIGINT PRIMARY KEY,
+
+    -- 사용 유형: STT_RELAY, INTERVIEWER_VOICE, INTERVIEWER_PREVIEW
+    usage_type VARCHAR(40) NOT NULL CHECK (usage_type IN ('STT_RELAY', 'INTERVIEWER_VOICE', 'INTERVIEWER_PREVIEW')),
+
+    -- 측정 주체: SERVER_MEASURED, CLIENT_REPORTED
+    usage_source VARCHAR(40) NOT NULL CHECK (usage_source IN ('SERVER_MEASURED', 'CLIENT_REPORTED')),
+
+    -- 사용한 사용자 FK
+    user_id BIGINT NOT NULL,
+
+    -- 관련 면접 세션 FK. 면접관 튜닝 화면은 NULL
+    session_id BIGINT,
+
+    -- CLIENT_REPORTED 중복 보고 방지 키. SERVER_MEASURED는 NULL
+    report_key VARCHAR(80) UNIQUE,
+
+    -- AI provider model과 사용량
+    model_name VARCHAR(120),
+    audio_input_ms INTEGER,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    estimated_cost_usd DECIMAL(12, 6),
+    cost_metadata_json TEXT,
+
+    -- 연결 시작/종료 시각
+    started_at TIMESTAMP,
+    ended_at TIMESTAMP,
+
+    -- 생성 시각
+    created_at TIMESTAMP NOT NULL
+);
+
 CREATE TABLE ai_guardrail_logs (
     -- AI 안전 가드레일 로그 PK
     guardrail_log_id BIGINT PRIMARY KEY,
@@ -1657,6 +1692,14 @@ ALTER TABLE ai_process_logs
 ALTER TABLE ai_guardrail_logs
     ADD CONSTRAINT fk_ai_guardrail_logs_process
     FOREIGN KEY (process_log_id) REFERENCES ai_process_logs(process_log_id);
+
+ALTER TABLE ai_realtime_usage_logs
+    ADD CONSTRAINT fk_ai_realtime_usage_logs_user
+    FOREIGN KEY (user_id) REFERENCES users(user_id);
+
+ALTER TABLE ai_realtime_usage_logs
+    ADD CONSTRAINT fk_ai_realtime_usage_logs_session
+    FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id);
 
 ALTER TABLE embeddings
     ADD CONSTRAINT fk_embeddings_posting

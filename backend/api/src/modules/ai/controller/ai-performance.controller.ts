@@ -48,7 +48,7 @@ export class AiPerformanceController {
   @ApiOperationId("API-100")
   @ApiOperation({ summary: "AI performance and estimated cost summary" })
   @ApiEnvelopeResponse(Object)
-  summary(@Query() query: AiPerformanceQueryDto) {
-    return this.performance.summary(query);
+  summary(@Req() request: AiPerformanceRequest, @Query() query: AiPerformanceQueryDto) {
+    return this.performance.summary(query, request.currentUser);
   }
 }

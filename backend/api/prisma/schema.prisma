@@ -162,6 +162,17 @@ enum AiProcessStatus {
   FAILED
 }
 
+enum AiRealtimeUsageType {
+  STT_RELAY
+  INTERVIEWER_VOICE
+  INTERVIEWER_PREVIEW
+}
+
+enum AiRealtimeUsageSource {
+  SERVER_MEASURED
+  CLIENT_REPORTED
+}
+
 enum AiRetrySource {
   INITIAL
   OPERATOR
@@ -242,6 +253,7 @@ model User {
   notifications             Notification[]
   confirmedScreeningResults Application[]      @relation("ScreeningResultConfirmer")
   paymentCustomers          PaymentCustomer[]
+  aiRealtimeUsageLogs       AiRealtimeUsageLog[]
 
   @@unique([authProvider, providerUserId], map: "uk_users_provider_user")
   @@map("users")
@@ -827,6 +839,7 @@ model InterviewSession {
   evaluationReports          EvaluationReport[]
   aiProcessLogs              AiProcessLog[]
   clientPerformanceLogs      ClientPerformanceLog[]
+  aiRealtimeUsageLogs        AiRealtimeUsageLog[]
   mockPassUsages             CandidateMockInterviewPassLedger[]
 
   @@index([candidateId, interviewType, deletedAt], map: "idx_interview_sessions_candidate_type_deleted")
@@ -1298,6 +1311,31 @@ model AiProcessTimingEvent {
   @@index([processLogId, eventName], map: "idx_ai_process_timing_events_process_event")
   @@index([eventName, createdAt], map: "idx_ai_process_timing_events_event_created")
   @@map("ai_process_timing_events")
+}
+
+model AiRealtimeUsageLog {
+  realtimeUsageLogId BigInt                @id @default(autoincrement()) @map("realtime_usage_log_id")
+  usageType          AiRealtimeUsageType   @map("usage_type")
+  usageSource        AiRealtimeUsageSource @map("usage_source")
+  userId             BigInt                @map("user_id")
+  sessionId          BigInt?               @map("session_id")
+  reportKey          String?               @unique(map: "uq_ai_realtime_usage_logs_report_key") @map("report_key") @db.VarChar(80)
+  modelName          String?               @map("model_name") @db.VarChar(120)
+  audioInputMs       Int?                  @map("audio_input_ms")
+  inputTokens        Int?                  @map("input_tokens")
+  outputTokens       Int?                  @map("output_tokens")
+  estimatedCostUsd   Decimal?              @map("estimated_cost_usd") @db.Decimal(12, 6)
+  costMetadataJson   String?               @map("cost_metadata_json")
+  startedAt          DateTime?             @map("started_at")
+  endedAt            DateTime?             @map("ended_at")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  user               User                  @relation(fields: [userId], references: [userId])
+  session            InterviewSession?     @relation(fields: [sessionId], references: [sessionId])
+
+  @@index([userId, createdAt], map: "idx_ai_realtime_usage_logs_user_created")
+  @@index([usageType, createdAt], map: "idx_ai_realtime_usage_logs_type_created")
+  @@index([sessionId], map: "idx_ai_realtime_usage_logs_session")
+  @@map("ai_realtime_usage_logs")
 }
 
 model ClientPerformanceLog {

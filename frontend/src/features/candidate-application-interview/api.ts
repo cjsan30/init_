@@ -557,6 +557,7 @@ export interface RealtimeSessionCredentials {
   clientSecretType: "ephemeral";
   expiresAt: string;
   endpoint: string;
+  usageReportToken?: string;
 }
 
 export interface RealtimeInterviewSessionResponse extends RealtimeSessionCredentials {

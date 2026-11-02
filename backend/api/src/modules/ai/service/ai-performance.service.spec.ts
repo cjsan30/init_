@@ -590,6 +590,63 @@ describe("AiPerformanceService", () => {
       expect.objectContaining({ count: 1 })
     );
   });
+
+  it("adds realtime STT relay and interviewer voice usage outside AI jobs to the summary", async () => {
+    const prisma = createPrisma();
+    prisma.aiProcessLog.findMany.mockResolvedValue([]);
+    prisma.clientPerformanceLog.findMany.mockResolvedValue([]);
+    prisma.aiRealtimeUsageLog.groupBy
+      .mockResolvedValueOnce([
+        {
+          usageType: "STT_RELAY",
+          usageSource: "SERVER_MEASURED",
+          _count: { _all: 8, estimatedCostUsd: 6 },
+          _sum: { estimatedCostUsd: "0.204", audioInputMs: 720000, inputTokens: null, outputTokens: null }
+        },
+        {
+          usageType: "INTERVIEWER_VOICE",
+          usageSource: "CLIENT_REPORTED",
+          _count: { _all: 1, estimatedCostUsd: 1 },
+          _sum: { estimatedCostUsd: "0.2504", audioInputMs: null, inputTokens: 11000, outputTokens: 4100 }
+        }
+      ])
+      .mockResolvedValueOnce([
+        { userId: 7n, _count: { _all: 9 }, _sum: { estimatedCostUsd: "0.4544", audioInputMs: 720000 } }
+      ]);
+
+    const service = new AiPerformanceService(prisma as unknown as PrismaService);
+    const result = await service.summary({ limit: 50 }, { userId: 99, userType: "ADMIN" });
+
+    expect(result.realtime).toEqual({
+      windowDays: 30,
+      estimatedCostUsd: 0.4544,
+      unpricedCount: 2,
+      audioInputMs: 720000,
+      byUsageType: [
+        expect.objectContaining({
+          usageType: "STT_RELAY",
+          count: 8,
+          unpricedCount: 2,
+          estimatedCostUsd: 0.204,
+          audioInputMs: 720000
+        }),
+        expect.objectContaining({ usageType: "INTERVIEWER_VOICE", inputTokens: 11000, outputTokens: 4100 })
+      ],
+      topUsers: [{ userId: 7, count: 9, estimatedCostUsd: 0.4544, audioInputMs: 720000 }]
+    });
+  });
+
+  it("hides the per-user realtime cost list from non-admin users", async () => {
+    const prisma = createPrisma();
+    prisma.aiProcessLog.findMany.mockResolvedValue([]);
+    prisma.clientPerformanceLog.findMany.mockResolvedValue([]);
+
+    const service = new AiPerformanceService(prisma as unknown as PrismaService);
+    const result = await service.summary({ limit: 50 }, candidateUser);
+
+    expect(result.realtime.topUsers).toBeUndefined();
+    expect(prisma.aiRealtimeUsageLog.groupBy).toHaveBeenCalledTimes(1);
+  });
 });
 
 function createPrisma() {
@@ -616,6 +673,9 @@ function createPrisma() {
     },
     question: {
       findUnique: jest.fn()
+    },
+    aiRealtimeUsageLog: {
+      groupBy: jest.fn().mockResolvedValue([])
     }
   };
 }

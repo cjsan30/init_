@@ -172,3 +172,43 @@ export class CreateRealtimeInterviewSessionDto {
   @IsIn(["webrtc"])
   transport?: "webrtc";
 }
+
+export class RealtimeUsageReportDto {
+  @IsString()
+  @MaxLength(2000)
+  usageReportToken!: string;
+
+  @IsInt()
+  @Min(0)
+  responseCount!: number;
+
+  @IsInt()
+  @Min(0)
+  inputTextTokens!: number;
+
+  @IsInt()
+  @Min(0)
+  inputAudioTokens!: number;
+
+  @IsInt()
+  @Min(0)
+  cachedInputTokens!: number;
+
+  @IsInt()
+  @Min(0)
+  outputTextTokens!: number;
+
+  @IsInt()
+  @Min(0)
+  outputAudioTokens!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  startedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  endedAt?: string;
+}

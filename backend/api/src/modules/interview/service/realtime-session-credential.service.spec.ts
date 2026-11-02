@@ -49,6 +49,7 @@ describe("RealtimeSessionCredentialService", () => {
     const result = await service.issueOpenAi({
       instructions: "Stay silent until response.create.",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     });
 
     expect(result.provider).toBe("openai");
@@ -86,6 +87,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_CONFLICT",
       statusCode: 409,
@@ -101,6 +103,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_CONFLICT",
       statusCode: 409,
@@ -122,6 +125,7 @@ describe("RealtimeSessionCredentialService", () => {
       await service.issueOpenAi({
         instructions: "instructions",
         safetyIdentifier: "preview-candidate-7",
+        usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
       });
     } catch (error) {
       thrown = error;
@@ -145,6 +149,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_EXTERNAL_SERVICE_FAILED",
       statusCode: 502,
@@ -166,6 +171,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_EXTERNAL_SERVICE_FAILED",
       statusCode: 502,
@@ -181,6 +187,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_EXTERNAL_SERVICE_FAILED",
       statusCode: 502,
@@ -201,6 +208,7 @@ describe("RealtimeSessionCredentialService", () => {
     const result = await service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     });
 
     expect(result.expiresAt).toBe(new Date(now + 120_000).toISOString());
@@ -229,6 +237,7 @@ describe("RealtimeSessionCredentialService", () => {
     const result = await service.issueOpenAi({
       instructions: "configured instructions",
       safetyIdentifier: "preview-candidate-8",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     });
     const requestBody = JSON.parse(String(calls[0]?.init?.body));
 
@@ -258,6 +267,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_EXTERNAL_SERVICE_FAILED",
       statusCode: 502,
@@ -278,6 +288,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_EXTERNAL_SERVICE_FAILED",
       statusCode: 502,
@@ -300,6 +311,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_EXTERNAL_SERVICE_FAILED",
       statusCode: 502,
@@ -323,6 +335,7 @@ describe("RealtimeSessionCredentialService", () => {
     await expect(service.issueOpenAi({
       instructions: "instructions",
       safetyIdentifier: "preview-candidate-7",
+      usage: { userId: 7, usageType: "INTERVIEWER_PREVIEW" },
     })).rejects.toMatchObject<Partial<CandidateDomainError>>({
       code: "COMMON_EXTERNAL_SERVICE_FAILED",
       statusCode: 502,

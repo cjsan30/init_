@@ -10,6 +10,7 @@ import {
   type PublicInterviewAccess,
 } from "./public/public-interview-access-token.service";
 import { InterviewService } from "./service/interview.service";
+import { RealtimeUsageService } from "./service/realtime-usage.service";
 
 type RelayMode = "mock" | "recruiting";
 
@@ -21,6 +22,7 @@ type RelayRoute = {
 
 type AttachRealtimeSttRelayOptions = {
   interviewService: InterviewService;
+  usageService?: RealtimeUsageService;
 };
 
 type RelayIncomingMessage = IncomingMessage & {
@@ -32,6 +34,7 @@ type OpenAiRealtimeEvent = {
   type?: string;
   delta?: string;
   transcript?: string;
+  usage?: unknown;
   session?: {
     type?: string;
   };
@@ -81,7 +84,12 @@ export function attachRealtimeSttRelayServer(
       client.close(1011, "Realtime STT relay request context is missing.");
       return;
     }
-    connectOpenAiRealtimeTranscription(client, request.realtimeSttRoute, request.realtimeSttCurrentUser);
+    connectOpenAiRealtimeTranscription(
+      client,
+      request.realtimeSttRoute,
+      request.realtimeSttCurrentUser,
+      options.usageService,
+    );
   });
 }
 
@@ -125,6 +133,7 @@ function connectOpenAiRealtimeTranscription(
   client: WebSocket,
   route: RelayRoute,
   currentUser: CurrentCandidateUser,
+  usageService?: RealtimeUsageService,
 ) {
   const apiKey = process.env.OPENAI_API_KEY ?? process.env.AI_PROVIDER_API_KEY;
   if (!apiKey || isPlaceholderSecret(apiKey)) {
@@ -152,6 +161,24 @@ function connectOpenAiRealtimeTranscription(
   let commitRequested = false;
   const pendingAudio: string[] = [];
   let accumulatedTranscript = "";
+  // OpenAI 과금 기준인 입력 오디오 길이를 서버에서 직접 센다. 연결이 끝나면 한 번만 기록한다.
+  let audioBytes = 0;
+  let audioStartedAt: Date | undefined;
+  let providerUsage: unknown;
+  let usageRecorded = false;
+  const recordUsage = () => {
+    if (usageRecorded || !usageService || !audioStartedAt) return;
+    usageRecorded = true;
+    void usageService.recordSttRelayUsage({
+      userId: currentUser.userId,
+      sessionId: route.sessionId,
+      model,
+      audioBytes,
+      startedAt: audioStartedAt,
+      endedAt: new Date(),
+      providerUsage,
+    });
+  };
 
   upstream.on("open", () => {
     upstreamOpen = true;
@@ -208,6 +235,7 @@ function connectOpenAiRealtimeTranscription(
 
     if (event.type === "conversation.item.input_audio_transcription.completed") {
       const transcript = event.transcript?.trim() || accumulatedTranscript.trim();
+      providerUsage = event.usage;
       sendClientEvent(client, {
         type: "transcript.final",
         transcript,
@@ -240,6 +268,7 @@ function connectOpenAiRealtimeTranscription(
   });
 
   upstream.on("close", (code, reason) => {
+    recordUsage();
     if (!clientClosed && client.readyState === WebSocket.OPEN) {
       sendClientEvent(client, {
         type: "relay.closed",
@@ -257,6 +286,8 @@ function connectOpenAiRealtimeTranscription(
     if (isBinary) {
       const audio = binaryMessageToBase64(data);
       if (!audio) return;
+      audioBytes += rawDataByteLength(data);
+      audioStartedAt ??= new Date();
       if (transcriptionSessionReady && upstream.readyState === WebSocket.OPEN) {
         appendAudio(upstream, audio);
       } else {
@@ -279,6 +310,7 @@ function connectOpenAiRealtimeTranscription(
 
   client.on("close", () => {
     clientClosed = true;
+    recordUsage();
     if (upstream.readyState === WebSocket.OPEN || upstream.readyState === WebSocket.CONNECTING) {
       upstream.close();
     }
@@ -387,6 +419,13 @@ function binaryMessageToBase64(data: WebSocket.RawData): string | null {
   if (data instanceof ArrayBuffer) return Buffer.from(data).toString("base64");
   if (Array.isArray(data)) return Buffer.concat(data).toString("base64");
   return null;
+}
+
+function rawDataByteLength(data: WebSocket.RawData): number {
+  if (Buffer.isBuffer(data)) return data.length;
+  if (data instanceof ArrayBuffer) return data.byteLength;
+  if (Array.isArray(data)) return data.reduce((sum, chunk) => sum + chunk.length, 0);
+  return 0;
 }
 
 function openAiRealtimeWebSocketUrl(): string {

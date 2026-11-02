@@ -6,6 +6,7 @@ import { PaymentModule } from "../payment/payment.module";
 import { AiJobDispatchModule } from "../report/ai-job-dispatch.module";
 import { InterviewController } from "./controller/interview.controller";
 import { InterviewerPreviewController } from "./controller/interviewer-preview.controller";
+import { RealtimeUsageController } from "./controller/realtime-usage.controller";
 import { DefaultPublicApplicationAccessVerifier, PUBLIC_APPLICATION_ACCESS_VERIFIER } from "./public/public-application-access.verifier";
 import { PublicInterviewAccessGuard } from "./public/public-interview-access.guard";
 import { PublicInterviewAccessTokenService } from "./public/public-interview-access-token.service";
@@ -18,10 +19,11 @@ import { INTERVIEW_MEDIA_STORAGE, S3InterviewMediaStorageAdapter } from "./servi
 import { InterviewService } from "./service/interview.service";
 import { InterviewerPreviewRealtimeService } from "./service/interviewer-preview-realtime.service";
 import { RealtimeSessionCredentialService } from "./service/realtime-session-credential.service";
+import { RealtimeUsageService } from "./service/realtime-usage.service";
 
 @Module({
   imports: [AuthModule, CandidateModule, PaymentModule, AiJobDispatchModule],
-  controllers: [InterviewController, InterviewerPreviewController, PublicInterviewController],
+  controllers: [InterviewController, InterviewerPreviewController, PublicInterviewController, RealtimeUsageController],
   providers: [
     PrismaService,
     {
@@ -34,6 +36,7 @@ import { RealtimeSessionCredentialService } from "./service/realtime-session-cre
         return new PrismaInterviewRepository(prisma);
       },
     },
+    RealtimeUsageService,
     RealtimeSessionCredentialService,
     InterviewerPreviewRealtimeService,
     InterviewService,
@@ -55,6 +58,7 @@ import { RealtimeSessionCredentialService } from "./service/realtime-session-cre
     INTERVIEW_MEDIA_STORAGE,
     InterviewService,
     RealtimeSessionCredentialService,
+    RealtimeUsageService,
     PublicInterviewAccessGuard,
     PublicInterviewAccessTokenService,
     PublicInterviewService,
