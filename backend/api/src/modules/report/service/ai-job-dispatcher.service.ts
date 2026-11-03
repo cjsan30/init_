@@ -1,4 +1,5 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
+import { CurrentUser } from "../../../common/dev-auth/current-user";
 import { AI_JOB_QUEUE_PUBLISHER, AiJobQueuePublisher } from "./ai-job-queue.publisher";
 import { REPORT_REPOSITORY, ReportRepository } from "../repository/report.repository";
 import {
@@ -26,6 +27,8 @@ export interface DispatchReportGenerationCommand {
   reportType: ReportType;
   input: unknown;
   refs?: AiProcessRefs;
+  // 지정되면 리포트가 요청자 회사/지원자 소유인지 확인한다(ADMIN은 허용). 서비스 내부 호출처럼 이미 소유권을 확인한 경우만 생략한다.
+  requester?: CurrentUser;
 }
 
 export interface DispatchReportGenerationResult extends DispatchAiJobResult {
@@ -70,6 +73,9 @@ export class AiJobDispatcherService {
   }
 
   async dispatchReportGeneration(command: DispatchReportGenerationCommand): Promise<DispatchReportGenerationResult> {
+    if (command.requester) {
+      await this.assertReportAccess(command.reportId, command.requester);
+    }
     const report = await this.repository.markReportGenerating(command.reportId, command.reportType, command.refs);
     const process = await this.dispatch({
       processType: "REPORT_GENERATE",
@@ -85,6 +91,23 @@ export class AiJobDispatcherService {
       ...process,
       report: finalReport
     };
+  }
+
+  async assertReportAccess(reportId: number, requester: CurrentUser): Promise<void> {
+    if (requester.userType === "ADMIN") return;
+
+    const owner = await this.repository.getReportOwner(reportId);
+    const allowed =
+      owner !== null &&
+      ((requester.userType === "COMPANY" && !!requester.companyId && owner.companyId === requester.companyId) ||
+        (requester.userType === "CANDIDATE" && !!requester.candidateId && owner.candidateId === requester.candidateId));
+
+    if (!allowed) {
+      throw new ForbiddenException({
+        code: "COMMON_FORBIDDEN",
+        message: "Report access is not allowed."
+      });
+    }
   }
 
   private queuePublishFailure(): FailureReason {

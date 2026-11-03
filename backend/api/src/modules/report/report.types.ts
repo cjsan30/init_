@@ -298,6 +298,11 @@ export interface EvaluationReportSnapshot {
   failure?: FailureReason;
 }
 
+export interface ReportOwner {
+  companyId: number | null;
+  candidateId: number | null;
+}
+
 export interface StoredCounts {
   scoreCount: number;
   evidenceCount: number;

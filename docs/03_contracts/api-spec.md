@@ -2478,6 +2478,7 @@ Allocation Examples:
 - 요청 데이터:
   - JD, 평가 기준, 서류 요약, 답변 스크립트
 - 검증/전제조건:
+  - Bearer JWT 필수(`JwtAuthGuard`). `X-Dev-*` 헤더는 `NODE_ENV=local|development|test`에서만 fallback으로 허용한다. 리포트가 호출자 `companyId` 소유가 아니거나 존재하지 않으면 작업을 만들지 않고 `403 COMMON_FORBIDDEN`을 반환한다.
   - 모든 필수 데이터가 존재
 - 성공 응답/처리:
   - 평가 컨텍스트 저장
@@ -2504,6 +2505,7 @@ Allocation Examples:
     - `ncsQuestionMode`
   - NCS metadata는 클라이언트 입력을 신뢰하지 않고 `interview_session_questions`를 정본으로 사용한다.
 - 검증/전제조건:
+  - Bearer JWT 필수(`JwtAuthGuard`). `X-Dev-*` 헤더는 `NODE_ENV=local|development|test`에서만 fallback으로 허용한다. 리포트가 호출자 `companyId` 소유가 아니거나 존재하지 않으면 작업을 만들지 않고 `403 COMMON_FORBIDDEN`을 반환한다.
   - 답변 스크립트 존재
   - NCS 답변은 모든 binding이 `alignmentStatus=ALIGNED`이고 지원 evaluator의 profile/mode/version이어야 한다.
   - profile metadata 누락 시 질문 문구로 profile을 추측하지 않는다.
@@ -2545,6 +2547,7 @@ Allocation Examples:
 - 요청 데이터:
   - 영상 파일, 음성 파일, 얼굴/시선/음성 피처
 - 검증/전제조건:
+  - Bearer JWT 필수(`JwtAuthGuard`). `X-Dev-*` 헤더는 `NODE_ENV=local|development|test`에서만 fallback으로 허용한다. 리포트가 호출자 `companyId` 소유가 아니거나 존재하지 않으면 작업을 만들지 않고 `403 COMMON_FORBIDDEN`을 반환한다.
   - 분석 동의 및 영상 품질 충족
 - 성공 응답/처리:
   - 커뮤니케이션 지표 저장
@@ -2567,6 +2570,7 @@ Allocation Examples:
   - 서류 평가 결과, 면접 평가 결과, 평가 기준
   - NCS 세션이면 `ncsScoringVersion`과 `ncsSessionPolicy`를 현재 공고가 아니라 session snapshot에서 전달한다.
 - 검증/전제조건:
+  - Bearer JWT 필수(`JwtAuthGuard`). `X-Dev-*` 헤더는 `NODE_ENV=local|development|test`에서만 fallback으로 허용한다. 리포트가 호출자 `companyId` 소유가 아니거나 존재하지 않으면 작업을 만들지 않고 `403 COMMON_FORBIDDEN`을 반환한다.
   - 평가 완료 상태 또는 NCS `INCOMPLETE` 상태가 명시적으로 확정됨
   - private follow-up 답변은 `follow_up_questions.inserted_session_question_id = interview_answers.session_question_id`로 원본 `answer_id`와 연결한다. 질문 문장, 답변 순서 또는 생성 시각으로 부모 답변을 추측하지 않는다.
   - 세션의 모든 답변은 transcript가 저장됐거나 최신 STT process가 `FAILED + REANSWER_REQUIRED`, 인식 불가 `FAILED + NON_RETRYABLE`, 자동 재시도 소진 `FAILED + RETRY_EXHAUSTED`인 `STT_UNAVAILABLE` terminal 상태여야 한다. STT가 아직 처리 중인 답변이 있으면 리포트 작업을 생성하지 않고 `409 COMMON_CONFLICT`를 반환한다. `RETRY_EXHAUSTED`는 리포트 생성을 더 이상 `STT_PROCESSING`으로 막지 않지만 지원자 재답변은 허용하지 않는다.
@@ -2595,6 +2599,7 @@ Allocation Examples:
 - 요청 데이터:
   - 평가 프롬프트, 금지 규칙, 출력 결과
 - 검증/전제조건:
+  - Bearer JWT 필수(`JwtAuthGuard`) + `ADMIN` 권한. `X-Dev-*` 헤더는 `NODE_ENV=local|development|test`에서만 fallback으로 허용한다.
   - 안전 정책 활성화
 - 성공 응답/처리:
   - 정책 준수 결과만 저장

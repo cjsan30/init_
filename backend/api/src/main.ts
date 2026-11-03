@@ -2,6 +2,7 @@ import "reflect-metadata";
 import cookieParser from "cookie-parser";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { DEV_AUTH_HEADERS, isDevAuthEnvironment, isSwaggerEnabled } from "./common/dev-auth/dev-auth-env";
 import { AppModule } from "./modules/app.module";
 import { ApiExceptionFilter } from "./shared/api-exception.filter";
 import { createApiValidationException } from "./shared/api-validation";
@@ -19,14 +20,7 @@ async function bootstrap() {
   app.enableCors({
     origin: createCorsOriginDelegate(),
     credentials: true,
-    allowedHeaders: [
-      "Authorization",
-      "Content-Type",
-      "X-Dev-User-Id",
-      "X-Dev-User-Type",
-      "X-Dev-Company-Id",
-      "X-Dev-Candidate-Id",
-    ],
+    allowedHeaders: ["Authorization", "Content-Type", ...(isDevAuthEnvironment() ? DEV_AUTH_HEADERS : [])],
   });
   app.useGlobalFilters(new ApiExceptionFilter());
   app.useGlobalInterceptors(new ApiResponseInterceptor());
@@ -38,7 +32,7 @@ async function bootstrap() {
       exceptionFactory: createApiValidationException,
     }),
   );
-  if (process.env.DISABLE_SWAGGER !== "true") {
+  if (isSwaggerEnabled()) {
     try {
       setupSwagger(app);
     } catch (error) {
