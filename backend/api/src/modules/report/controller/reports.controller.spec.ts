@@ -60,6 +60,8 @@ describe("ReportsController", () => {
     );
     await app.init();
     repository = app.get(InMemoryReportRepository);
+    repository.setReportOwner(1, { companyId: 1, candidateId: null });
+    repository.setReportOwner(2, { companyId: 2, candidateId: null });
     candidateRepository = app.get<CandidateRepository>(CANDIDATE_REPOSITORY);
     queuePublisher = app.get<InMemoryAiJobQueuePublisher>(AI_JOB_QUEUE_PUBLISHER);
     const interviewRepository = app.get<InMemoryInterviewRepository>(INTERVIEW_REPOSITORY);
@@ -818,11 +820,59 @@ describe("ReportsController", () => {
       .send(validGeneratePayload())
       .expect(401);
 
-    expect(response.body.error).toEqual({
-      code: "COMMON_UNAUTHORIZED",
-      message: "Dev auth headers are required.",
-      details: []
-    });
+    expect(response.body.error.code).toBe("COMMON_UNAUTHORIZED");
+  });
+
+  it("rejects report generation for a report owned by another company", async () => {
+    const queuedBefore = queuePublisher.messages.length;
+
+    const response = await companyRequest("/api/v1/reports/2/generate").send(validGeneratePayload()).expect(403);
+
+    expect(response.body.error.code).toBe("COMMON_FORBIDDEN");
+    expect(queuePublisher.messages.length).toBe(queuedBefore);
+    await expect(repository.getReport(2)).rejects.toThrow();
+  });
+
+  it("rejects report pipeline steps for unknown or foreign reports", async () => {
+    await companyRequest("/api/v1/reports/2/evaluation-context").send(validContextPayload()).expect(403);
+    await companyRequest("/api/v1/reports/999/generate").send(validGeneratePayload()).expect(403);
+  });
+
+  it.each([
+    ["production", "production"],
+    ["unset", undefined],
+  ])("ignores forged dev auth headers when NODE_ENV is %s", async (_label, nodeEnv) => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    if (nodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = nodeEnv;
+    }
+    try {
+      const guardrail = await adminRequest("/api/v1/ai/guardrails/validate")
+        .send({ reportType: "RECRUITING_REPORT", target: "SCORES", scores: [] })
+        .expect(401);
+      expect(guardrail.body.error.code).toBe("COMMON_UNAUTHORIZED");
+
+      const queuedBefore = queuePublisher.messages.length;
+      await companyRequest("/api/v1/reports/1/generate").send(validGeneratePayload()).expect(401);
+      expect(queuePublisher.messages.length).toBe(queuedBefore);
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+  });
+
+  it("accepts a JWT company user on report generation", async () => {
+    const token = jwt.sign(
+      { sub: 1, userType: "COMPANY", companyId: 1, candidateId: null, tokenType: "access" },
+      process.env.JWT_SECRET ?? "local-dev-jwt-secret-change-me",
+    );
+
+    await request(app.getHttpServer())
+      .post("/api/v1/reports/1/generate")
+      .set("Authorization", `Bearer ${token}`)
+      .send(validGeneratePayload())
+      .expect(202);
   });
 
   it("returns forbidden for candidate users on recruiting report generation", async () => {

@@ -22,6 +22,7 @@ import {
   isRetryableFailureCategory,
   ProcessLogSnapshot,
   QueuedAiProcessSnapshot,
+  ReportOwner,
   ReportPipelineStep,
   ReportScore,
   ReportType,
@@ -541,6 +542,28 @@ export class PrismaReportRepository implements ReportRepository {
       where: { reportId: BigInt(reportId) }
     });
     return this.toReportSnapshot(report);
+  }
+
+  async getReportOwner(reportId: number): Promise<ReportOwner | null> {
+    const report = await this.prisma.evaluationReport.findUnique({
+      where: { reportId: BigInt(reportId) },
+      select: {
+        application: { select: { candidateId: true, posting: { select: { companyId: true } } } },
+        session: {
+          select: {
+            candidateId: true,
+            application: { select: { posting: { select: { companyId: true } } } }
+          }
+        }
+      }
+    });
+    if (!report) return null;
+    const companyId = report.application?.posting.companyId ?? report.session?.application?.posting.companyId ?? null;
+    const candidateId = report.application?.candidateId ?? report.session?.candidateId ?? null;
+    return {
+      companyId: companyId === null ? null : Number(companyId),
+      candidateId: candidateId === null ? null : Number(candidateId)
+    };
   }
 
   async countStored(reportId: number): Promise<StoredCounts> {

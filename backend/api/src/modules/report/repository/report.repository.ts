@@ -8,6 +8,7 @@ import {
   AiProcessType,
   ProcessLogSnapshot,
   QueuedAiProcessSnapshot,
+  ReportOwner,
   ReportPipelineStep,
   ReportScore,
   ReportType,
@@ -54,5 +55,6 @@ export interface ReportRepository {
   saveScoresAndEvidences(reportId: number, scores: ReportScore[]): Promise<StoredCounts>;
   saveGuardrailLog(processLogId: number, policyName: string, decision: GuardrailDecision): Promise<number>;
   getReport(reportId: number): Promise<EvaluationReportSnapshot>;
+  getReportOwner(reportId: number): Promise<ReportOwner | null>;
   countStored(reportId: number): Promise<StoredCounts>;
 }

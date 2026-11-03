@@ -1,7 +1,8 @@
-import { BadRequestException, Body, Controller, Headers, HttpCode, HttpStatus, Inject, Param, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { DevAuthAdapter } from "../../../common/dev-auth/dev-auth.adapter";
 import { CurrentUser } from "../../../common/dev-auth/current-user";
+import { JwtAuthGuard } from "../../auth/jwt-auth.guard";
 import { ApiEnvelopeResponse, ApiErrorResponses, ApiOperationId, ApiParamId } from "../../../swagger/swagger.decorators";
 import {
   AnswerEvaluationRequestDto,
@@ -20,7 +21,7 @@ import {
   ReportType
 } from "../report.types";
 
-type HeaderMap = Record<string, string | string[] | undefined>;
+type AuthRequest = Parameters<DevAuthAdapter["resolve"]>[0];
 
 const companyDevAuthSecurity = {
   "x-dev-user-id": [],
@@ -34,6 +35,7 @@ const candidateDevAuthSecurity = {
   "x-dev-candidate-id": [],
 };
 
+@UseGuards(JwtAuthGuard)
 @Controller("reports")
 @ApiTags("Report Pipeline")
 @ApiBearerAuth("bearer")
@@ -53,10 +55,10 @@ export class ReportsController {
   @ApiEnvelopeResponse(AiJobResponseDto, 202)
   async buildEvaluationContext(
     @Param("reportId") reportIdParam: string,
-    @Headers() headers: HeaderMap,
+    @Req() request: AuthRequest,
     @Body() body: EvaluationContextRequestDto
   ) {
-    const currentUser = this.devAuthAdapter.parse(headers);
+    const currentUser = this.devAuthAdapter.resolve(request);
     this.devAuthAdapter.assertCompany(currentUser);
     this.validateEvaluationContextPayload(body);
 
@@ -64,6 +66,7 @@ export class ReportsController {
     const result = await this.dispatcher.dispatchReportGeneration({
       reportId,
       reportType: body.reportType,
+      requester: currentUser,
       input: this.reportStepInput("EVALUATION_CONTEXT", reportId, body, currentUser)
     });
 
@@ -78,10 +81,10 @@ export class ReportsController {
   @ApiEnvelopeResponse(AiJobResponseDto, 202)
   async evaluateAnswers(
     @Param("reportId") reportIdParam: string,
-    @Headers() headers: HeaderMap,
+    @Req() request: AuthRequest,
     @Body() body: AnswerEvaluationRequestDto
   ) {
-    const currentUser = this.devAuthAdapter.parse(headers);
+    const currentUser = this.devAuthAdapter.resolve(request);
     this.devAuthAdapter.assertCompany(currentUser);
     this.validateAnswerEvaluationPayload(body);
 
@@ -89,6 +92,7 @@ export class ReportsController {
     const result = await this.dispatcher.dispatchReportGeneration({
       reportId,
       reportType: body.reportType,
+      requester: currentUser,
       input: this.reportStepInput("ANSWER_EVALUATION", reportId, body, currentUser)
     });
 
@@ -103,10 +107,10 @@ export class ReportsController {
   @ApiEnvelopeResponse(AiJobResponseDto, 202)
   async analyzeCommunication(
     @Param("reportId") reportIdParam: string,
-    @Headers() headers: HeaderMap,
+    @Req() request: AuthRequest,
     @Body() body: CommunicationAnalysisRequestDto
   ) {
-    const currentUser = this.devAuthAdapter.parse(headers);
+    const currentUser = this.devAuthAdapter.resolve(request);
     this.devAuthAdapter.assertCompany(currentUser);
     this.validateCommunicationAnalysisPayload(body);
 
@@ -114,6 +118,7 @@ export class ReportsController {
     const result = await this.dispatcher.dispatchReportGeneration({
       reportId,
       reportType: body.reportType,
+      requester: currentUser,
       input: this.reportStepInput("COMMUNICATION_ANALYSIS", reportId, body, currentUser)
     });
 
@@ -128,10 +133,10 @@ export class ReportsController {
   @ApiEnvelopeResponse(GenerateReportResponseDto, 202)
   async generateRecruitingReport(
     @Param("reportId") reportIdParam: string,
-    @Headers() headers: HeaderMap,
+    @Req() request: AuthRequest,
     @Body() body: GenerateReportRequestDto
   ) {
-    const currentUser = this.devAuthAdapter.parse(headers);
+    const currentUser = this.devAuthAdapter.resolve(request);
     this.devAuthAdapter.assertCompany(currentUser);
 
     if (body.reportType !== "RECRUITING_REPORT") {
@@ -147,6 +152,7 @@ export class ReportsController {
     const result = await this.dispatcher.dispatchReportGeneration({
       reportId,
       reportType: body.reportType,
+      requester: currentUser,
       input: this.reportInput("RECRUITING_REPORT_GENERATE", reportId, body, currentUser)
     });
 
@@ -282,6 +288,7 @@ export class ReportsController {
   }
 }
 
+@UseGuards(JwtAuthGuard)
 @Controller("candidate/mock-interview/reports")
 @ApiTags("Candidate Mock Reports")
 @ApiBearerAuth("bearer")
@@ -301,10 +308,10 @@ export class CandidateMockReportsController {
   @ApiEnvelopeResponse(GenerateReportResponseDto, 202)
   async generateMockInterviewReport(
     @Param("reportId") reportIdParam: string,
-    @Headers() headers: HeaderMap,
+    @Req() request: AuthRequest,
     @Body() body: GenerateReportRequestDto
   ) {
-    const currentUser = this.devAuthAdapter.parse(headers);
+    const currentUser = this.devAuthAdapter.resolve(request);
     this.devAuthAdapter.assertCandidate(currentUser);
 
     if (body.reportType !== "MOCK_INTERVIEW_REPORT") {
@@ -320,6 +327,7 @@ export class CandidateMockReportsController {
     const result = await this.dispatcher.dispatchReportGeneration({
       reportId,
       reportType: body.reportType,
+      requester: currentUser,
       input: this.reportInput("MOCK_REPORT_GENERATE", reportId, body, currentUser)
     });
 

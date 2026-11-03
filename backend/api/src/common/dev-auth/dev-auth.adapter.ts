@@ -1,11 +1,40 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { CurrentUser, UserType } from "./current-user";
+import { isDevAuthEnvironment } from "./dev-auth-env";
 
 type HeaderBag = Record<string, string | string[] | undefined>;
 
+type RequestUser = {
+  userId: number;
+  userType: UserType;
+  companyId?: number | null;
+  candidateId?: number | null;
+};
+
 @Injectable()
 export class DevAuthAdapter {
+  // JwtAuthGuard가 넣은 request.currentUser를 우선 사용하고, 없을 때만 개발 환경 헤더로 대체한다.
+  resolve(request: { currentUser?: RequestUser | null; headers?: HeaderBag }): CurrentUser {
+    if (request.currentUser) {
+      const currentUser: CurrentUser = {
+        userId: request.currentUser.userId,
+        userType: request.currentUser.userType,
+      };
+      if (request.currentUser.companyId) currentUser.companyId = request.currentUser.companyId;
+      if (request.currentUser.candidateId) currentUser.candidateId = request.currentUser.candidateId;
+      return currentUser;
+    }
+    return this.parse(request.headers ?? {});
+  }
+
   parse(headers: HeaderBag): CurrentUser {
+    if (!isDevAuthEnvironment()) {
+      throw new UnauthorizedException({
+        code: "COMMON_UNAUTHORIZED",
+        message: "Authentication is required."
+      });
+    }
+
     const userId = this.numberHeader(headers, "x-dev-user-id");
     const userType = this.stringHeader(headers, "x-dev-user-type") as UserType | undefined;
 

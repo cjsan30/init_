@@ -48,8 +48,11 @@ X-Dev-Candidate-Id: 1
 
 ## Required Behavior
 
-- Dev Auth는 local/dev 환경에서만 활성화한다.
-- production/staging에서는 `X-Dev-*` 헤더를 무시하거나 요청을 거부한다.
+- Dev Auth는 `NODE_ENV`가 `local`, `development`, `test` 중 하나일 때만 활성화한다.
+- `NODE_ENV`가 비어 있거나 그 외 값(`production`, `staging` 등)이면 운영으로 간주한다(fail closed). 이때 `X-Dev-*` 헤더는 무시되고 JWT가 없으면 401을 반환한다. `CANDIDATE_DEMO_NO_AUTH`도 같은 조건에서만 동작한다.
+- 운영 환경에서는 CORS `allowedHeaders`에 `X-Dev-*`를 포함하지 않는다. Swagger는 운영에서 기본 비활성이며 `ENABLE_SWAGGER=true`로만 켠다(`DISABLE_SWAGGER=true`가 항상 우선).
+- 모든 protected controller는 `JwtAuthGuard`를 거친다. Dev Auth 헤더는 guard 안의 개발 환경 fallback으로만 해석하며, guard 없이 `DevAuthAdapter.parse`만으로 인증하는 route를 두지 않는다.
+- 리포트 생성 작업(`/reports/:reportId/*`)은 리포트가 호출자 회사(`COMPANY`) 또는 지원자(`CANDIDATE`) 소유일 때만 dispatch한다. `ADMIN`은 허용한다. 소유자가 아니거나 리포트가 없으면 `COMMON_FORBIDDEN`(403)을 반환한다.
 - 인증 정보가 없거나 잘못되면 `COMMON_UNAUTHORIZED`와 HTTP 401을 반환한다.
 - 인증은 되었지만 role이 맞지 않으면 `COMMON_FORBIDDEN`과 HTTP 403을 반환한다.
 - B/C는 `COMPANY`만 접근 가능한 API를 구현한다.

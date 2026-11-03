@@ -15,6 +15,7 @@ import {
   AiProcessType,
   ProcessLogSnapshot,
   QueuedAiProcessSnapshot,
+  ReportOwner,
   ReportPipelineStep,
   ReportScore,
   ReportType,
@@ -49,6 +50,7 @@ export class InMemoryReportRepository implements ReportRepository {
   private nextGuardrailLogId = 1;
 
   private readonly reports = new Map<number, EvaluationReportSnapshot>();
+  private readonly reportOwners = new Map<number, ReportOwner>();
   private readonly processLogs = new Map<number, ProcessLogSnapshot>();
   private readonly processReportIds = new Map<number, number>();
   private readonly contexts = new Map<number, EvaluationContext>();
@@ -331,6 +333,15 @@ export class InMemoryReportRepository implements ReportRepository {
 
   async getReport(reportId: number): Promise<EvaluationReportSnapshot> {
     return { ...this.requireReport(reportId) };
+  }
+
+  async getReportOwner(reportId: number): Promise<ReportOwner | null> {
+    const owner = this.reportOwners.get(reportId);
+    return owner ? { ...owner } : null;
+  }
+
+  setReportOwner(reportId: number, owner: ReportOwner): void {
+    this.reportOwners.set(reportId, { ...owner });
   }
 
   async countStored(reportId: number): Promise<StoredCounts> {

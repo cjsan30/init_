@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import jwt from "jsonwebtoken";
 import { ERROR_CODES, isUserType, type CurrentUser } from "@init/common";
+import { isDevAuthEnvironment } from "../../common/dev-auth/dev-auth-env";
 import { ApiException } from "../../shared/api-exception";
 import type { JwtPayload } from "./auth.types";
 
@@ -42,7 +43,7 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private readDevAuth(headers: Record<string, string | undefined>): CurrentUser | null {
-    if (!["local", "development", "test"].includes(process.env.NODE_ENV ?? "development")) return null;
+    if (!isDevAuthEnvironment()) return null;
     const userId = Number(headers["x-dev-user-id"]);
     const userType = headers["x-dev-user-type"];
     if (!userId || !isUserType(userType)) return null;
@@ -55,7 +56,7 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private readCandidateDemoAuth(request: { originalUrl?: string; url?: string }): CurrentUser | null {
-    if (!["local", "development", "test"].includes(process.env.NODE_ENV ?? "development")) return null;
+    if (!isDevAuthEnvironment()) return null;
     if (process.env.CANDIDATE_DEMO_NO_AUTH !== "true") return null;
 
     const url = request.originalUrl ?? request.url ?? "";

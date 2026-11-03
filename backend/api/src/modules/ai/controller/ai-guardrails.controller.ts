@@ -1,18 +1,20 @@
-import { BadRequestException, Body, Controller, Headers, HttpCode, HttpStatus, Inject, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { DevAuthAdapter } from "../../../common/dev-auth/dev-auth.adapter";
+import { JwtAuthGuard } from "../../auth/jwt-auth.guard";
 import { ApiDevAuthHeaders, ApiEnvelopeResponse, ApiErrorResponses, ApiOperationId } from "../../../swagger/swagger.decorators";
 import { GuardrailValidationRequestDto, GuardrailValidationResultDto } from "../dto/ai-job.dto";
 import { GuardrailService } from "../../report/service/guardrail.service";
 import { REPORT_REPOSITORY, ReportRepository } from "../../report/repository/report.repository";
 import { GuardrailValidationRequest, GuardrailValidationResult } from "../../report/report.types";
 
-type HeaderMap = Record<string, string | string[] | undefined>;
+type AuthRequest = Parameters<DevAuthAdapter["resolve"]>[0];
 
 @ApiTags("AI Guardrails")
 @ApiBearerAuth("bearer")
 @ApiDevAuthHeaders()
 @ApiErrorResponses()
+@UseGuards(JwtAuthGuard)
 @Controller("ai/guardrails")
 export class AiGuardrailsController {
   constructor(
@@ -26,8 +28,8 @@ export class AiGuardrailsController {
   @ApiOperationId("API-079")
   @ApiOperation({ summary: "AI 출력 안전성 검증" })
   @ApiEnvelopeResponse(GuardrailValidationResultDto)
-  async validate(@Headers() headers: HeaderMap, @Body() body: GuardrailValidationRequestDto) {
-    const currentUser = this.devAuthAdapter.parse(headers);
+  async validate(@Req() request: AuthRequest, @Body() body: GuardrailValidationRequestDto) {
+    const currentUser = this.devAuthAdapter.resolve(request);
     this.devAuthAdapter.assertAdmin(currentUser);
     this.validateBody(body);
 
